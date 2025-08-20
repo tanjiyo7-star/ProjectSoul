@@ -3,7 +3,6 @@ require_once '../../Core/bootstrap.php';
 
 header('Content-Type: application/json');
 
-
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
@@ -29,19 +28,18 @@ try {
     $queryBuilder = new queryBuilder();
     $userId = $_SESSION['user_id'];
     
-    // Delete notification (only if it belongs to the current user)
-    $sql = "DELETE FROM notifications WHERE id = :id AND toUserId = :userId";
+    $sql = "UPDATE notifications SET status = 'read' WHERE id = :id AND toUserId = :userId";
     $stmt = $queryBuilder->pdo->prepare($sql);
     $result = $stmt->execute(['id' => $notificationId, 'userId' => $userId]);
     
     if ($result && $stmt->rowCount() > 0) {
-        echo json_encode(['success' => true, 'message' => 'Notification deleted']);
+        echo json_encode(['success' => true, 'message' => 'Notification marked as read']);
     } else {
         http_response_code(404);
         echo json_encode(['error' => 'Notification not found']);
     }
 } catch (Exception $e) {
-    http_response_code(400);
+    http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
 exit();

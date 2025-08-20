@@ -1,0 +1,5 @@
+node_modules/
+.env
+# Ignore uploads folder (user uploaded files)
+uploads/
+images/

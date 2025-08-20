@@ -16,6 +16,12 @@ return $routes = [
         '/api/new-posts-count' => 'PagesController@apiNewPostsCount',
         '/api/posts/like-counts' => 'PagesController@apiLikeCounts',
         '/api/posts/comment-counts' => 'PagesController@apiCommentCounts',
+        '/api/heartbeat' => 'PagesController@apiHeartbeat',
+        '/api/online-users' => 'PagesController@apiOnlineUsers',
+        '/api/comment-delete' => 'PagesController@apiCommentDelete',
+        '/api/comment-like' => 'PagesController@apiCommentLike',
+        '/api/comment-typing' => 'PagesController@apiCommentTyping',
+        '/api/search' => 'PagesController@apiSearch',
         '/comments' => 'PagesController@comment',
     ], 
     'POST' => [
@@ -30,6 +36,14 @@ return $routes = [
         '/update-profile' => 'PagesController@updateProfile',
         '/upload-avatar' => 'PagesController@uploadAvatar',
         '/api/notifications/delete' => 'PagesController@deleteNotification',
-        '/api/notifications/mark-read' => 'PagesController@markNotificationRead'
+        '/api/notifications/mark-read' => 'PagesController@markNotificationRead',
+        '/api/heartbeat' => 'PagesController@apiHeartbeat',
+        '/api/posts/like-counts' => 'PagesController@apiLikeCounts',
+        '/api/posts/comment-counts' => 'PagesController@apiCommentCounts',
+        '/api/comment-delete' => 'PagesController@apiCommentDelete',
+        '/api/comment-like' => 'PagesController@apiCommentLike',
+        '/api/comment-typing' => 'PagesController@apiCommentTyping',
+        '/api/notifications/clear-all' => 'PagesController@apiClearAllNotifications',
+        '/api/notifications/mark-all-read' => 'PagesController@apiMarkAllNotificationsRead'
     ]
 ];

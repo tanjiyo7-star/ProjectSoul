@@ -1017,11 +1017,18 @@ public function getLastMessageForUser($current_user_id){
 
 
     public function getNewPostsCountSince($since) {
+        $sinceDate = date('Y-m-d H:i:s', $since / 1000);
+        
         $sql = "SELECT COUNT(*) AS new_count
-                FROM posts
-                WHERE created_at > :since";
+                FROM posts p
+                WHERE p.created_at > :since
+                AND p.userId != :userId";
+        
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['since' => $since]);
+        $stmt->execute([
+            'since' => $sinceDate,
+            'userId' => $_SESSION['user_id'] ?? 0
+        ]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? $result['new_count'] : 0;
     }

@@ -860,7 +860,106 @@ class PagesController {
         echo json_encode([
             'notification_count' => $noti_count,
             'message_count' => $unread_count
+            'notifications' => $noti_count,
+            'messages' => $unread_count
         ]);
+        exit();
+    }
+    
+    public function apiHeartbeat() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        try {
+            $queryBuilder = new queryBuilder();
+            $sql = "UPDATE users SET last_seen = NOW() WHERE id = :userId";
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $stmt->execute(['userId' => $_SESSION['user_id']]);
+            
+            echo json_encode(['status' => 'ok', 'timestamp' => time()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiOnlineUsers() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        try {
+            $queryBuilder = new queryBuilder();
+            
+            $sql = "SELECT id FROM users 
+                    WHERE last_seen > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+                    AND id != :userId";
+            
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $stmt->execute(['userId' => $_SESSION['user_id']]);
+            
+            $onlineUsers = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $onlineUsers[] = intval($row['id']);
+            }
+            
+            echo json_encode(['onlineUsers' => $onlineUsers]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiLikeCounts() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $postIds = $input['post_ids'] ?? [];
+            
+            if (empty($postIds) || !is_array($postIds)) {
+                echo json_encode(['likeCounts' => []]);
+                exit();
+            }
+            
+            $queryBuilder = new queryBuilder();
+            $likeCounts = [];
+            
+            foreach ($postIds as $postId) {
+                $postId = intval($postId);
+                if ($postId > 0) {
+                    $likeCounts[$postId] = $queryBuilder->getLikesCountForPost($postId);
+                }
+            }
+            
+            echo json_encode(['likeCounts' => $likeCounts]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
         exit();
     }
     
@@ -872,19 +971,262 @@ class PagesController {
             exit();
         }
         
-        $queryBuilder = new queryBuilder();
-        $user_id = $_SESSION['user_id'];
-        
-        // Get all posts for the user
-        $posts = $queryBuilder->getPosts($user_id);
-        $commentCounts = [];
-        
-        foreach ($posts as $post) {
-            $commentCounts[$post['id']] = $queryBuilder->getCommentsCountForPost($post['id']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
         }
         
-        echo json_encode(['commentCounts' => $commentCounts]);
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $postIds = $input['post_ids'] ?? [];
+            
+            if (empty($postIds) || !is_array($postIds)) {
+                echo json_encode(['commentCounts' => []]);
+                exit();
+            }
+            
+            $queryBuilder = new queryBuilder();
+            $commentCounts = [];
+            
+            foreach ($postIds as $postId) {
+                $postId = intval($postId);
+                if ($postId > 0) {
+                    $commentCounts[$postId] = $queryBuilder->getCommentsCountForPost($postId);
+                }
+            }
+            
+            echo json_encode(['commentCounts' => $commentCounts]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
         exit();
+    }
+    
+    public function apiCommentDelete() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $commentId = intval($input['comment_id'] ?? 0);
+            
+            if ($commentId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid comment ID']);
+                exit();
+            }
+            
+            $queryBuilder = new queryBuilder();
+            
+            // Verify the comment belongs to the current user
+            $sql = "SELECT userId FROM comments WHERE id = :commentId";
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $stmt->execute(['commentId' => $commentId]);
+            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$comment) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Comment not found']);
+                exit();
+            }
+            
+            if ($comment['userId'] != $_SESSION['user_id']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Not authorized to delete this comment']);
+                exit();
+            }
+            
+            // Delete the comment
+            $result = $queryBuilder->deleteComment($commentId);
+            
+            if ($result) {
+                echo json_encode(['success' => true, 'message' => 'Comment deleted successfully']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to delete comment']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiCommentLike() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $commentId = intval($input['comment_id'] ?? 0);
+            $action = $input['action'] ?? '';
+            
+            if ($commentId <= 0 || !in_array($action, ['like', 'unlike'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid parameters']);
+                exit();
+            }
+            
+            // For now, just return success - you can implement comment likes later
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiCommentTyping() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            // For now, just return success - you can implement typing indicators later
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiSearch() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        try {
+            $query = trim($_GET['q'] ?? '');
+            
+            if (strlen($query) < 2) {
+                echo json_encode(['success' => true, 'users' => []]);
+                exit();
+            }
+            
+            $queryBuilder = new queryBuilder();
+            $currentUserId = $_SESSION['user_id'];
+            
+            $users = $queryBuilder->searchUsers($query, $currentUserId);
+            
+            // Add isCurrentUser flag
+            foreach ($users as &$user) {
+                $user['isCurrentUser'] = ($user['id'] == $currentUserId);
+            }
+            
+            echo json_encode(['success' => true, 'users' => $users]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiClearAllNotifications() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            $queryBuilder = new queryBuilder();
+            $userId = $_SESSION['user_id'];
+            
+            $sql = "DELETE FROM notifications WHERE toUserId = :userId";
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $result = $stmt->execute(['userId' => $userId]);
+            
+            if ($result) {
+                echo json_encode(['success' => true, 'message' => 'All notifications cleared']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to clear notifications']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error']);
+        }
+        exit();
+    }
+    
+    public function apiMarkAllNotificationsRead() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+        
+        try {
+            $queryBuilder = new queryBuilder();
+            $userId = $_SESSION['user_id'];
+            
+            $sql = "UPDATE notifications SET status = 'read' WHERE toUserId = :userId AND status = 'unread'";
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $result = $stmt->execute(['userId' => $userId]);
+            
+            if ($result) {
+                echo json_encode(['success' => true, 'message' => 'All notifications marked as read']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to mark notifications as read']);
+            }
+        // This method is now handled above in the new apiCommentCounts method
+        $this->apiCommentCounts();
     }
     
     public function deleteNotification() {

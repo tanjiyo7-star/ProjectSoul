@@ -74,7 +74,7 @@
                                 <p><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($user['location']) ?></p>
                             <?php endif; ?>
                             <?php if (!empty($zodiacSign)): ?>
-                                <p><i class="fas fa-star"></i> <?= htmlspecialchars($zodiacSign) ?> (Zodiac)</p>
+                                <p><i class="fas fa-star"></i> <?= htmlspecialchars($zodiacSign) ?></p>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>

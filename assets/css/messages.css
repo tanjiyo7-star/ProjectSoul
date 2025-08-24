@@ -136,7 +136,7 @@
     object-fit: cover;
 }
 
-.online-indicator {
+/* .online-indicator {
     position: absolute;
     bottom: 2px;
     right: 2px;
@@ -145,7 +145,7 @@
     background: #17bf63;
     border: 2px solid white;
     border-radius: 50%;
-}
+} */
 
 .chat-info {
     flex: 1;
@@ -255,11 +255,11 @@
     color: #14171a;
 }
 
-.partner-status {
+/* .partner-status {
     font-size: 14px;
     color: #17bf63;
     font-weight: 500;
-}
+} */
 
 .chat-actions {
     display: flex;

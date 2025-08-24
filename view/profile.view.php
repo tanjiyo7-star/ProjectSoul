@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/profile.css" />
     <script src="/assets/js/profile.js" defer></script>
-    <script src="/assets/js/home.js" defer></script>
+    <!-- <script src="/assets/js/home.js" defer></script> -->
     <script>
         const CSRF_TOKEN = "<?= $_SESSION['csrf_token'] ?>";
         const currentUserId = <?= $current_user_id ?>;

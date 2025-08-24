@@ -10,7 +10,7 @@ class StoryViewer {
         this.modal = null;
         this.progressBar = null;
         this.timer = null;
-        this.storyDuration = 5000; // 5 seconds per story
+        this.storyDuration = 10000; // 10 seconds per story
         this.isPlaying = false;
         
         this.init();

@@ -7,7 +7,7 @@
     margin-bottom: var(--spacing-md);
     position: relative;
     overflow: visible; /* allow scroll overflow */
-    max-width: 420px; /* Reduce width to match the image */
+    max-width: 520px; /* Reduce width to match the image */
     margin: 0 auto;
 }
 

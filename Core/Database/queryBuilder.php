@@ -817,7 +817,25 @@ public function getLastMessageForUser($current_user_id){
     $stmt->execute(['current_user_id' => $current_user_id]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
+    public function getLatestMessages($chatId, $limit = 50) {
+        $stmt = $this->pdo->prepare("
+            SELECT m.id, m.chatId, m.senderId, m.content AS content, m.created_at,
+                   u.firstName, p.avatar
+            FROM messages m
+            JOIN users u ON m.senderId = u.id
+            JOIN profiles p ON u.id = p.id
+            WHERE m.chatId = :chatId
+            ORDER BY m.created_at ASC
+            LIMIT :limit
+        ");
 
+        // PDO bind
+        $stmt->bindValue(':chatId', $chatId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
     // Enhanced methods for edit profile functionality
     public function getUserFullData($userId) {
         $sql = "SELECT 

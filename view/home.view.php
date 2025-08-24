@@ -18,7 +18,6 @@
     
     <main class="main-container">
         <div class="container">
-            <!-- Left Sidebar -->
             <aside class="left-sidebar">
                 <div class="profile-card">
                     <a href="/profile" class="profile-link">
@@ -73,12 +72,9 @@
                 </button>
             </aside>
 
-            <!-- Main Content -->
             <div class="main-content">
-                <!-- Stories Section -->
                 <section class="stories-section">
                     <div class="stories-container">
-                        <!-- Add Story Button -->
                         <div class="story add-story" onclick="document.getElementById('storyUpload').click()">
                             <div class="story-image">
                                 <img src="<?= htmlspecialchars($data['user']['avatar'] ?? 'images/profile.jpg') ?>" 
@@ -91,7 +87,6 @@
                             <p class="story-name">Your Story</p>
                         </div>
                         
-                        <!-- Grouped user stories -->
                         <?php foreach($userStories as $userId => $userData): ?>
                             <div class="story"
                                  data-user-id="<?= $userId ?>"
@@ -107,18 +102,15 @@
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Story Navigation Buttons -->
                     <button class="story-scroll-btn story-scroll-left"><i class="fas fa-chevron-left"></i></button>
                     <button class="story-scroll-btn story-scroll-right"><i class="fas fa-chevron-right"></i></button>
                 </section>
 
-                <!-- Hidden Story Upload Form -->
                 <form action="/story-upload" method="POST" enctype="multipart/form-data" style="display: none;">
                     <input type="file" id="storyUpload" name="story_media" accept="image/*,video/*" onchange="this.form.submit()">
                     <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
                 </form>
 
-                <!-- Create Post Section -->
                 <section class="create-post-section">
                     <form action="/post-create" method="POST" enctype="multipart/form-data" class="create-post-form">
                         <div class="post-header">
@@ -159,7 +151,6 @@
                             </div>
                         </div>
 
-                        <!-- Media Preview -->
                         <div class="media-preview" id="mediaPreview" style="display: none;">
                             <div class="preview-container">
                                 <img id="previewImg" src="" alt="Preview" style="display: none;">
@@ -174,7 +165,6 @@
                     </form>
                 </section>
 
-                <!-- Posts Feed -->
                 <section class="posts-feed" id="posts-feed">
                     <?php if (empty($data['posts'])): ?>
                         <div class="empty-feed">

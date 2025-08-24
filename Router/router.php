@@ -1,6 +1,6 @@
 <?php   
 
-    class Router {
+    class Router { 
         private $routes = [];
 
         public function __construct($routes) {

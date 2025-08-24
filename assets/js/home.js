@@ -87,7 +87,7 @@ async function togglePostLike(postId) {
         if (data.success) {
             // Update with server response
             updateLikeUI(likeBtn, heartIcon, likeCountSpan, data.liked, data.like_count);
-            showToast('success', isLiked ? 'Post unliked' : 'Post liked');
+            // showToast('success', isLiked ? 'Post unliked' : 'Post liked');
         } else {
             // Revert optimistic update on error
             updateLikeUI(likeBtn, heartIcon, likeCountSpan, isLiked);

@@ -12,6 +12,7 @@ return $routes = [
         '/error' => 'PagesController@error',
         '/edit-profile' => 'PagesController@editProfile',
         '/comments' => 'PagesController@comments',
+        '/api/messages/latest' => 'PagesController@apiLatestMessages',
         '/api/notification-counts' => 'PagesController@apiNotificationCounts',
         '/api/new-posts-count' => 'PagesController@apiNewPostsCount',
         '/api/posts/like-counts' => 'PagesController@apiLikeCounts',

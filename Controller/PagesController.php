@@ -859,7 +859,7 @@ class PagesController {
         
         echo json_encode([
             'notification_count' => $noti_count,
-            'message_count' => $unread_count
+            'message_count' => $unread_count,
             'notifications' => $noti_count,
             'messages' => $unread_count
         ]);
@@ -882,9 +882,10 @@ class PagesController {
             $stmt->execute(['userId' => $_SESSION['user_id']]);
             
             echo json_encode(['status' => 'ok', 'timestamp' => time()]);
-        } catch (Exception $e) {
+        }    catch (Exception $e) {
+            error_log("Heartbeat Error: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(['error' => 'Server error']);
+            echo json_encode(['error' => $e->getMessage()]);
         }
         exit();
     }
@@ -902,7 +903,7 @@ class PagesController {
             $queryBuilder = new queryBuilder();
             
             $sql = "SELECT id FROM users 
-                    WHERE last_seen > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+                    WHERE last_seen > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
                     AND id != :userId";
             
             $stmt = $queryBuilder->pdo->prepare($sql);
@@ -915,11 +916,71 @@ class PagesController {
             
             echo json_encode(['onlineUsers' => $onlineUsers]);
         } catch (Exception $e) {
+            error_log("onlineUsers Error: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(['error' => 'Server error']);
+            echo json_encode(['error' => $e->getMessage()]);
         }
         exit();
     }
+
+    // PagesController.php
+public function apiLatestMessages() {
+    header('Content-Type: application/json');
+
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit();
+    }
+
+    $userId = (int) $_SESSION['user_id'];
+    $chatId = isset($_GET['chatId']) ? (int) $_GET['chatId'] : 0;
+    $sinceId = isset($_GET['sinceId']) ? (int) $_GET['sinceId'] : 0;
+
+    if ($chatId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid chat ID']);
+        exit();
+    }
+
+    try {
+         $qb = new queryBuilder();
+
+        // // 1) Verify user is a participant of the chat
+        // $sql = "SELECT id FROM chats 
+        //         WHERE id = :chatId AND (user1Id = :uid OR user2Id = :uid) LIMIT 1";
+        // $stmt = $qb->pdo->prepare($sql);
+        // $stmt->execute(['chatId' => $chatId, 'uid' => $userId]);
+        // $chat = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // if (!$chat) {
+        //     http_response_code(404);
+        //     echo json_encode(['error' => 'Chat not found']);
+        //     exit();
+        // }
+
+        // 2) Fetch messages newer than sinceId (to avoid duplicates)
+        $sql = "SELECT m.id, m.chatId, m.senderId, m.content, m.created_at,
+                       u.firstName, u.lastName, p.avatar
+                FROM messages m
+                JOIN users u ON u.id = m.senderId
+                JOIN profiles p ON u.id = p.id
+                WHERE m.chatId = :chatId AND m.id > :sinceId
+                ORDER BY m.id ASC
+                LIMIT 100";
+        $stmt = $qb->pdo->prepare($sql);
+        $stmt->execute(['chatId' => $chatId, 'sinceId' => $sinceId]);
+
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['messages' => $messages]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+    exit();
+}
+
+
     
     public function apiLikeCounts() {
         header('Content-Type: application/json');
@@ -1197,38 +1258,40 @@ class PagesController {
     }
     
     public function apiMarkAllNotificationsRead() {
-        header('Content-Type: application/json');
-        
-        if (!isset($_SESSION['user_id'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Not authenticated']);
-            exit();
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            exit();
-        }
-        
-        try {
-            $queryBuilder = new queryBuilder();
-            $userId = $_SESSION['user_id'];
-            
-            $sql = "UPDATE notifications SET status = 'read' WHERE toUserId = :userId AND status = 'unread'";
-            $stmt = $queryBuilder->pdo->prepare($sql);
-            $result = $stmt->execute(['userId' => $userId]);
-            
-            if ($result) {
-                echo json_encode(['success' => true, 'message' => 'All notifications marked as read']);
-            } else {
-                http_response_code(500);
-                echo json_encode(['error' => 'Failed to mark notifications as read']);
-            }
-        // This method is now handled above in the new apiCommentCounts method
-        $this->apiCommentCounts();
+    header('Content-Type: application/json');
+    
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit();
     }
     
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+        exit();
+    }
+    
+    try {
+        $queryBuilder = new queryBuilder();
+        $userId = $_SESSION['user_id'];
+        
+        $sql = "UPDATE notifications SET status = 'read' WHERE toUserId = :userId AND status = 'unread'";
+        $stmt = $queryBuilder->pdo->prepare($sql);
+        $result = $stmt->execute(['userId' => $userId]);
+        
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'All notifications marked as read']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark notifications as read']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error']);
+    }
+    exit();
+}
     public function deleteNotification() {
         header('Content-Type: application/json');
         

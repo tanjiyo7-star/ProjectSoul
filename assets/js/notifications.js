@@ -98,7 +98,7 @@ function initializeRealTimeUpdates() {
  */
 async function pollForNewNotifications() {
     try {
-        const response = await fetch('/api/notifications/poll.php', {
+        const response = await fetch('/api/notifications/poll', {
             headers: {
                 'X-CSRF-Token': window.csrfToken
             }

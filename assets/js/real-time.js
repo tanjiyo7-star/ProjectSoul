@@ -28,6 +28,9 @@ function initializeRealTime() {
     requestNotificationPermission();
 }
 
+
+
+
 /**
  * Request notification permission
  */
@@ -415,9 +418,12 @@ function initializeOnlineStatus() {
     
     // Send heartbeat on page load
     sendHeartbeat();
-    
-    // Update online indicators
-    setInterval(updateOnlineIndicators, 60000);
+
+        // 🔹 Update online indicators right away (Fix for delay)
+    updateOnlineIndicators();
+
+    // Update online indicators every 20 seconds
+    setInterval(updateOnlineIndicators, 20000);
 }
 
 /**
@@ -470,6 +476,31 @@ async function updateOnlineIndicators() {
         console.error('Failed to update online indicators:', error);
     }
 }
+
+// real-time.js
+const partnerStatusEl = document.querySelector('.partner-status');
+const partnerUserId = partnerStatusEl.dataset.userId;
+
+async function checkOnlineStatus() {
+    try {
+        const res = await fetch('/api/online-users');
+        const data = await res.json();
+        const onlineUsersArray = data.onlineUsers || [];
+        if (onlineUsersArray.includes(parseInt(partnerUserId))) {
+            partnerStatusEl.textContent = 'Active now';
+            partnerStatusEl.classList.add('online');
+        } else {
+            partnerStatusEl.textContent = 'Offline';
+            partnerStatusEl.classList.remove('online');
+        }
+    } catch (err) {
+        console.error('Failed to fetch online status', err);
+    }
+}
+
+// Poll every 10 seconds
+checkOnlineStatus();
+setInterval(checkOnlineStatus, 10000);
 
 /**
  * Initialize live reactions
@@ -666,9 +697,25 @@ realTimeStyle.textContent = `
     }
     
     .online-indicator.active {
-        background: var(--online-color);
-        box-shadow: 0 0 0 2px white, 0 0 0 4px var(--online-color);
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: #17bf63;
+      border: 2px solid white;
+      border-radius: 50%;
     }
+
+.partner-status.online {
+    color: #17bf63;
+    font-weight: bold;
+}
+
+.partner-status {
+    color: gray;
+}
+
 `;
 document.head.appendChild(realTimeStyle);
 

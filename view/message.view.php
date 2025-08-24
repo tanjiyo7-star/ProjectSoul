@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/messages.css" />
     <script src="/assets/js/messages.js" defer></script>
+    <script src="/assets/js/real-time.js" defer></script>
 </head>
 <body>
     <?php
@@ -36,8 +37,9 @@
                 
                 <div class="chat-list" id="chatList">
                     <?php foreach ($users as $user): ?>
-                        <div class="chat-item <?php echo isset($_GET['chat_id']) && isset($chat_partner) && $chat_partner['id'] == $user['id'] ? 'active' : ''; ?>" 
-                             onclick="window.location='message?start_chat=1&user_id=<?= $user['id'] ?>'">
+                        <div class="chat-item <?= isset($_GET['chat_id']) && isset($chat_partner) && $chat_partner['id'] == $user['id'] ? '' : ''; ?>" 
+                            data-user-id="<?= $user['id'] ?>"
+                            onclick="window.location='message?start_chat=1&user_id=<?= $user['id'] ?>'">
                             <div class="chat-avatar">
                                 <img src="<?= htmlspecialchars($user['avatar'] ?? 'images/profile.jpg') ?>" 
                                      alt="<?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?>">
@@ -86,7 +88,7 @@
                                  class="partner-avatar">
                             <div class="partner-details">
                                 <h3><?= htmlspecialchars($chat_partner['firstName'] . ' ' . $chat_partner['lastName']) ?></h3>
-                                <span class="partner-status">Active now</span>
+                                <span class="partner-status" data-user-id="<?= $chat_partner['id'] ?>"</span>
                             </div>
                         </div>
                         <div class="chat-actions">

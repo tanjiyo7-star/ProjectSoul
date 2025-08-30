@@ -65,7 +65,7 @@
                                 <?php endif; ?>
                                 <?php if (!empty($user['unread_count']) && $user['unread_count'] > 0): ?>
                                     <div class="unread-badge">
-                                        <?= $user['unread_count'] ?>
+                                        <?= ceil($user['unread_count']/2) ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -85,13 +85,13 @@
                         <div class="chat-partner-info">
                             <img src="<?= htmlspecialchars($chat_partner['avatar'] ?? 'images/profile.jpg') ?>" 
                                  alt="<?= htmlspecialchars($chat_partner['firstName'] . ' ' . $chat_partner['lastName']) ?>" 
-                                 class="partner-avatar">
+                                 class="partner-avatar" onclick="window.location.href='profile?id=<?= $chat_partner['id'] ?>'">
                             <div class="partner-details">
                                 <h3><?= htmlspecialchars($chat_partner['firstName'] . ' ' . $chat_partner['lastName']) ?></h3>
-                                <span class="partner-status" data-user-id="<?= $chat_partner['id'] ?>"</span>
+                                <span class="partner-status" data-user-id="<?= $chat_partner['id'] ?>"></span>
                             </div>
                         </div>
-                        <div class="chat-actions">
+                        <!-- <div class="chat-actions">
                             <button class="action-btn">
                                 <i class=""></i>
                             </button>
@@ -101,13 +101,15 @@
                             <button class="action-btn">
                                 <i class=""></i>
                             </button>
-                        </div>
+                        </div> -->
                     </div>
                     
                     <!-- Messages -->
                     <div class="messages-area" id="messagesArea">
                         <?php foreach ($messages as $message): ?>
-                            <div class="message <?= $message['senderId'] == $current_user_id ? 'sent' : 'received' ?>">
+                            <div id="msg-<?= (int)$message['id'] ?>"
+                                 class="message <?= $message['senderId'] == $current_user_id ? 'sent' : 'received' ?>"
+                                 data-created-at="<?= htmlspecialchars($message['created_at']) ?>">
                                 <?php if ($message['senderId'] != $current_user_id): ?>
                                     <img src="<?= htmlspecialchars($message['avatar'] ?? 'images/profile.jpg') ?>" 
                                          alt="<?= htmlspecialchars($message['firstName']) ?>" 
@@ -118,7 +120,16 @@
                                         <?= htmlspecialchars($message['content']) ?>
                                     </div>
                                     <div class="message-time">
-                                        <?= date('H:i', strtotime($message['created_at'])) ?>
+                                        <span><?= date('H:i', strtotime($message['created_at'])) ?></span>
+                                        <?php if ($message['senderId'] == $current_user_id): ?>
+                                        <span class="message-status" data-message-id="<?= $message['id'] ?>">
+                                            <?php if ($message['is_read']): ?>
+                                                <i class="fas fa-check-circle read"></i>
+                                            <?php else: ?>
+                                                <i class="fas fa-check-circle"></i>
+                                            <?php endif; ?>
+                                        </span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -130,9 +141,9 @@
                         <form id="messageForm" method="POST" action="/sendMessage">
                             <input type="hidden" name="chat_id" value="<?= $_GET['chat_id'] ?>">
                             <div class="input-wrapper">
-                                <button type="button" class="attachment-btn">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                <!-- <button type="button" class="attachment-btn">
+                                    <i class="fas fa"></i>
+                                </button> -->
                                 <input type="text" 
                                        name="message" 
                                        placeholder="Type a message..." 
@@ -141,7 +152,7 @@
                                        autocomplete="off"
                                        required>
                                 <button type="button" class="emoji-btn">
-                                    <i class="fas fa-smile"></i>
+                                    <i class="fas fa"></i>
                                 </button>
                                 <button type="submit" class="send-btn">
                                     <i class="fas fa-paper-plane"></i>

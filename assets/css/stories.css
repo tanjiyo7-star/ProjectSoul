@@ -7,7 +7,7 @@
     margin-bottom: var(--spacing-md);
     position: relative;
     overflow: visible; /* allow scroll overflow */
-    max-width: 520px; /* Reduce width to match the image */
+    max-width: 420px; /* Reduce width to match the image */
     margin: 0 auto;
 }
 
@@ -40,29 +40,34 @@
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Remove gradient background for full image */
+    background: none;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 16px;
+    justify-content: flex-end;
+    /* Remove padding for edge-to-edge image */
+    padding: 0;
     color: white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .story-image {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 140px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 .story-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 12px;
+    border-radius: 16px;
 }
 
 .story-count-badge {
@@ -75,13 +80,22 @@
     padding: 2px 10px;
     border-radius: 12px;
     font-weight: bold;
+    z-index: 2;
 }
 
 .story-name {
+    position: absolute;
+    bottom: 16px;
+    left: 12px;
+    width: 100%;
     text-align: center;
     font-size: 14px;
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 0;
+    z-index: 2;
+    /* Add text shadow for readability */
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    pointer-events: none;
 }
 
 .story:hover {
@@ -120,8 +134,8 @@
 
 .story .add-icon {
     position: absolute;
-    bottom: 16px;
-    right: 16px;
+    bottom: 50px;
+    right: 40px;
     width: 28px;
     height: 28px;
     background: #5e4dcd;
@@ -487,7 +501,7 @@
     .story {
         width: 100px;
         height: 160px;
-        padding: 12px;
+        padding: 0;
     }
     
     .story .profile-photo {
@@ -496,7 +510,7 @@
     }
     
     .story .name {
-        font-size: 12px;
+        display: none;
     }
     
     .story-scroll-btn {
@@ -508,19 +522,31 @@
     .story {
         width: 90px;
         height: 140px;
-        padding: 10px;
+        padding: 0;
     }
     
     .story .profile-photo {
         width: 28px;
         height: 28px;
     }
+
+        .story .name {
+        display: none;
+    }
     
-    .story .add-icon {
+    /* .story .add-icon {
         width: 24px;
         height: 24px;
         font-size: 14px;
         bottom: 12px;
         right: 12px;
+    } */
+
+    .story .add-icon {
+        font-size: 14px;
+        bottom: 50px;
+        right: 28px;
+        width: 28px;
+        height: 28px;
     }
 }

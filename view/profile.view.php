@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/profile.css" />
     <script src="/assets/js/profile.js" defer></script>
-    <!-- <script src="/assets/js/home.js" defer></script> -->
+    <script src="/assets/js/real-time.js" defer></script>
     <script>
         const CSRF_TOKEN = "<?= $_SESSION['csrf_token'] ?>";
         const currentUserId = <?= $current_user_id ?>;
@@ -120,7 +120,7 @@
                                 </button>
                             <?php endif; ?>
                         <?php else: ?>
-                            <button class="action-btn edit-profile-btn">
+                            <button class="action-btn edit-profile-btn" onclick="window.location.href='/edit-profile'">
                                 <i class="fas fa-edit"></i>
                                 Edit Profile
                             </button>
@@ -169,7 +169,9 @@
                                                  class="author-avatar">
                                             <div class="author-info">
                                                 <h4><?= htmlspecialchars($post['username']) ?></h4>
-                                                <time><?= date('M j, Y g:i a', strtotime($post['created_at'])) ?></time>
+                                                <time>
+                                                    <?= formatTimeAgo($post['created_at']) ?>
+                                                </time>
                                             </div>
                                         </div>
                                         <div class="post-privacy">
@@ -219,7 +221,7 @@
                                                 data-post-id="<?= $post['post_id'] ?>"
                                                 onclick="openShareModal(<?= $post['post_id'] ?>)">
                                             <i class="fas fa-share"></i>
-                                            <span>Share</span>
+                                            <span>Share</span> 
                                         </button>
                                         </div>
                                         <!-- Quick Comment Form -->
@@ -268,3 +270,29 @@
     <div id="toast" class="toast"></div>
 </body>
 </html>
+
+<?php
+/**
+ * Helper function to format time ago
+ */
+function formatTimeAgo($dateString) {
+    $date = new DateTime($dateString);
+    $now = new DateTime();
+    // // Ensure $date is not in the future
+    // if ($date > $now) {
+    //     return 'Just now';
+    // }
+    $diff = $now->getTimestamp() - $date->getTimestamp();
+    if ($diff < 60) {
+        return 'Just now';
+    } elseif ($diff < 3600) {
+        return floor($diff / 60) . 'm ago';
+    } elseif ($diff < 86400) {
+        return floor($diff / 3600) . 'h ago';
+    } elseif ($diff < 604800) {
+        return floor($diff / 86400) . 'd ago';
+    } else {
+        return $date->format('M j, Y');
+    }
+}
+?>

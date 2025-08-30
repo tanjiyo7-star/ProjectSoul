@@ -287,10 +287,11 @@
 .messages-area {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    transition: padding-bottom 0.18s ease;
 }
 
 .message {
@@ -307,6 +308,10 @@
 
 .message.received {
     align-self: flex-start;
+}
+
+.fas.fa-check-circle.read {
+    color: green;
 }
 
 .message-avatar {
@@ -371,10 +376,10 @@
     transition: all 0.3s ease;
 }
 
-.input-wrapper:focus-within {
+/* .input-wrapper:focus-within {
     border-color: #5e4dcd;
     background: white;
-}
+} */
 
 .attachment-btn,
 .emoji-btn {
@@ -690,5 +695,31 @@
     .messages-area {
         padding: 12px;
         gap: 12px;
+    }
+}
+
+/* make messages-area padding animate so changes from JS feel smooth */
+.messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: padding-bottom 0.18s ease;
+}
+
+/* MOBILE: hide header/partner info when typing to free vertical space */
+@media (max-width: 768px) {
+    .chat-area.typing .chat-area-header {
+        transform: translateY(-100%);
+        transition: transform 0.18s ease;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    /* slightly reduce top padding when header hidden */
+    .chat-area.typing .messages-area {
+        padding-top: 12px;
     }
 }

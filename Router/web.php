@@ -22,7 +22,10 @@ return $routes = [
         '/api/comment-delete' => 'PagesController@apiCommentDelete',
         '/api/comment-like' => 'PagesController@apiCommentLike',
         '/api/comment-typing' => 'PagesController@apiCommentTyping',
+        '/api/message-status' => 'PagesController@apiMessageStatus',
+        '/api/messages/mark-read' => 'PagesController@apiMarkMessagesRead',
         '/api/search' => 'PagesController@apiSearch',
+        '/api/new-posts' => 'PagesController@apiNewPosts',
         '/comments' => 'PagesController@comment',
     ], 
     'POST' => [
@@ -43,8 +46,11 @@ return $routes = [
         '/api/posts/comment-counts' => 'PagesController@apiCommentCounts',
         '/api/comment-delete' => 'PagesController@apiCommentDelete',
         '/api/comment-like' => 'PagesController@apiCommentLike',
+        '/api/message-status' => 'PagesController@apiMessageStatus',
         '/api/comment-typing' => 'PagesController@apiCommentTyping',
         '/api/notifications/clear-all' => 'PagesController@apiClearAllNotifications',
-        '/api/notifications/mark-all-read' => 'PagesController@apiMarkAllNotificationsRead'
+        '/api/notifications/mark-all-read' => 'PagesController@apiMarkAllNotificationsRead',
+        '/api/new-posts' => 'PagesController@apiNewPosts',
+        '/api/messages/mark-read' => 'PagesController@apiMarkMessagesRead'
     ]
 ];

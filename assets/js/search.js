@@ -8,8 +8,17 @@ function initializeSearch() {
     const userCards = document.querySelectorAll('.user-card');
     userCards.forEach(card => {
         card.addEventListener('click', function(e) {
-            // Prevent default action if clicking on buttons
-            if (e.target.closest('.action-btn')) {
+            // If clicked element is inside an action button
+            const actionBtn = e.target.closest('.action-btn');
+            if (!actionBtn) return;
+
+            // Allow anchor links to perform their default navigation
+            if (actionBtn.tagName && actionBtn.tagName.toLowerCase() === 'a') {
+                return;
+            }
+
+            // Prevent default only for button-like controls inside the card
+            if (actionBtn.tagName && (actionBtn.tagName.toLowerCase() === 'button' || actionBtn.tagName.toLowerCase() === 'input')) {
                 e.preventDefault();
             }
         });
@@ -52,6 +61,86 @@ async function sendFriendRequest(userId) {
         console.error('Error:', error);
         button.innerHTML = originalText;
         showToast(error.message || 'Failed to send friend request', 'error');
+    } finally {
+        button.classList.remove('loading');
+    }
+}
+
+async function cancelFriendRequest(userId) {
+    const button = document.querySelector(`[data-user-id="${userId}"] .friend-btn.cancel`);
+    if (!button) return;
+
+    button.classList.add('loading');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner"></i><span>Cancelling...</span>';
+
+    try {
+        const response = await fetch('/friendRequest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN
+            },
+            body: JSON.stringify({
+                action: 'cancel',
+                user_id: userId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            button.innerHTML = '<i class="fas fa-times"></i><span>Request Cancelled</span>';
+            button.style.background = '#e0245e';
+            button.disabled = true;
+            showToast('Friend request cancelled.', 'success');
+        } else {
+            throw new Error(result.error || 'Failed to cancel friend request');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        button.innerHTML = originalText;
+        showToast(error.message || 'Failed to cancel friend request', 'error');
+    } finally {
+        button.classList.remove('loading');
+    }
+}
+
+async function acceptFriendRequest(userId) {
+    const button = document.querySelector(`[data-user-id="${userId}"] .friend-btn.accept`);
+    if (!button) return;
+
+    button.classList.add('loading');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner"></i><span>Accepting...</span>';
+
+    try {
+        const response = await fetch('/friendRequest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN
+            },
+            body: JSON.stringify({
+                action: 'accept',
+                user_id: userId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            button.innerHTML = '<i class="fas fa-check"></i><span>Friend Added</span>';
+            button.style.background = '#17bf63';
+            button.disabled = true;
+            showToast('Friend request accepted!', 'success');
+        } else {
+            throw new Error(result.error || 'Failed to accept friend request');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        button.innerHTML = originalText;
+        showToast(error.message || 'Failed to accept friend request', 'error');
     } finally {
         button.classList.remove('loading');
     }
@@ -137,7 +226,7 @@ async function performSearch(query) {
 function updateSearchResults(users) {
     const resultsContainer = document.querySelector('.search-results');
     if (!resultsContainer) return;
-    
+
     if (users.length === 0) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
@@ -169,16 +258,31 @@ function updateSearchResults(users) {
             </div>
             
             <div class="user-actions">
-                ${!user.isCurrentUser ? `
-                    <button class="action-btn message-btn" onclick="startChat(${user.id})">
-                        <i class="fas fa-envelope"></i>
-                        <span>Message</span>
-                    </button>
-                    <button class="action-btn friend-btn" onclick="sendFriendRequest(${user.id})">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Add Friend</span>
-                    </button>
-                ` : ''}
+                ${
+                    !user.isCurrentUser
+                        ? user.requestReceived
+                            ? `
+                                <button class="action-btn friend-btn cancel" onclick="cancelFriendRequest(${user.id})">
+                                    <i class="fas fa-times"></i>
+                                    <span>Cancel Request</span>
+                                </button>
+                                <button class="action-btn friend-btn accept" onclick="acceptFriendRequest(${user.id})">
+                                    <i class="fas fa-check"></i>
+                                    <span>Accept Request</span>
+                                </button>
+                              `
+                            : `
+                                <button class="action-btn message-btn" onclick="startChat(${user.id})">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>Message</span>
+                                </button>
+                                <button class="action-btn friend-btn" onclick="sendFriendRequest(${user.id})">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Add Friend</span>
+                                </button>
+                              `
+                        : ''
+                }
                 <a href="profile?id=${user.id}" class="action-btn view-btn">
                     <i class="fas fa-eye"></i>
                     <span>View Profile</span>

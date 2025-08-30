@@ -13,6 +13,13 @@ let heartbeatFetchErrorLogged = false;
 let likeCountsFetchErrorLogged = false;
 let commentCountsFetchErrorLogged = false;
 
+// Add small helpers & state
+let lastNotificationCounts = { notifications: 0, messages: 0 };
+let fetchTimeout = 8000; // ms
+
+// Add error suppression flag for new posts JSON parse error
+let newPostsJsonErrorLogged = false;
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeRealTime();
@@ -27,9 +34,6 @@ function initializeRealTime() {
     initializeLiveInteractions();
     requestNotificationPermission();
 }
-
-
-
 
 /**
  * Request notification permission
@@ -103,28 +107,38 @@ async function checkForUpdates() {
  */
 async function updateNotificationCounts() {
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), fetchTimeout);
+
         const response = await fetch('/api/notification-counts', {
-            headers: {
-                'X-CSRF-Token': window.csrfToken || ''
-            }
+            headers: { 'X-CSRF-Token': window.csrfToken || '' },
+            signal: controller.signal
         });
-        
+        clearTimeout(timeoutId);
+
         if (response.ok) {
             const data = await response.json();
-            
-            // Update notification badge
-            updateBadge('notification-count', data.notifications);
-            
-            // Update message badge
-            updateBadge('message-count', data.messages);
-            
-            // Show desktop notification for new notifications
-            if (data.notifications > 0 && 'Notification' in window) {
-                showDesktopNotification('New notifications', `You have ${data.notifications} new notification${data.notifications > 1 ? 's' : ''}`);
+
+            // Avoid unnecessary DOM changes & duplicate desktop notifications
+            if (data.notifications !== lastNotificationCounts.notifications) {
+                updateBadge('notification-count', data.notifications);
+                if (data.notifications > lastNotificationCounts.notifications && 'Notification' in window) {
+                    showDesktopNotification('New notifications', `You have ${data.notifications} new notification${data.notifications > 1 ? 's' : ''}`);
+                }
             }
+            if (data.messages !== lastNotificationCounts.messages) {
+                updateBadge('message-count', data.messages);
+            }
+
+            lastNotificationCounts.notifications = data.notifications;
+            lastNotificationCounts.messages = data.messages;
         }
     } catch (error) {
-        console.error('Failed to update notification counts:', error);
+        if (error.name === 'AbortError') {
+            console.warn('updateNotificationCounts aborted due to timeout');
+        } else {
+            console.error('Failed to update notification counts:', error);
+        }
     }
 }
 
@@ -179,7 +193,16 @@ async function checkForNewPosts() {
         });
         
         if (response.ok) {
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                if (!newPostsJsonErrorLogged) {
+                    console.warn('Failed to parse new posts response as JSON. The server may have returned an error page.');
+                    newPostsJsonErrorLogged = true;
+                }
+                return;
+            }
             
             if (data.newPosts && data.newPosts > 0) {
                 showNewPostsIndicator(data.newPosts);
@@ -422,8 +445,8 @@ function initializeOnlineStatus() {
         // 🔹 Update online indicators right away (Fix for delay)
     updateOnlineIndicators();
 
-    // Update online indicators every 20 seconds
-    setInterval(updateOnlineIndicators, 20000);
+    // Update online indicators every 30 seconds
+    setInterval(updateOnlineIndicators, 30000);
 }
 
 /**
@@ -431,12 +454,14 @@ function initializeOnlineStatus() {
  */
 async function sendHeartbeat() {
     try {
-        await fetch('/api/heartbeat', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-Token': window.csrfToken || ''
-            }
-        });
+        // Prefer sendBeacon for quick/background delivery
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/heartbeat');
+            heartbeatFetchErrorLogged = false;
+            return;
+        }
+
+        await fetch('/api/heartbeat', { method: 'POST', headers: { 'X-CSRF-Token': window.csrfToken || '' } });
         heartbeatFetchErrorLogged = false; // Reset on success
     } catch (error) {
         if (error instanceof TypeError && !heartbeatFetchErrorLogged) {
@@ -479,9 +504,13 @@ async function updateOnlineIndicators() {
 
 // real-time.js
 const partnerStatusEl = document.querySelector('.partner-status');
-const partnerUserId = partnerStatusEl.dataset.userId;
+let partnerUserId = null;
+if (partnerStatusEl) {
+    partnerUserId = partnerStatusEl.dataset.userId;
+}
 
 async function checkOnlineStatus() {
+    if (!partnerStatusEl || !partnerUserId) return;
     try {
         const res = await fetch('/api/online-users');
         const data = await res.json();
@@ -499,8 +528,10 @@ async function checkOnlineStatus() {
 }
 
 // Poll every 10 seconds
-checkOnlineStatus();
-setInterval(checkOnlineStatus, 10000);
+if (partnerStatusEl && partnerUserId) {
+    checkOnlineStatus();
+    setInterval(checkOnlineStatus, 10000);
+}
 
 /**
  * Initialize live reactions

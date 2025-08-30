@@ -1,185 +1,55 @@
 /**
  * Story Viewer JavaScript
- * Handles Facebook-style story carousel and modal viewer
+ * Beautiful Facebook-style story carousel and modal viewer
+ * Supports both image and video stories with autoplay, next/prev navigation
  */
 
 class StoryViewer {
     constructor() {
+        this.userStories = [];
+        this.currentUserIndex = 0;
         this.currentStoryIndex = 0;
-        this.stories = [];
         this.modal = null;
         this.progressBar = null;
         this.timer = null;
-        this.storyDuration = 10000; // 10 seconds per story
-        this.isPlaying = false;
-        
+        this.storyDuration = 8000; // 8 seconds per story (image)
+        this.isPlaying = true;
+        this.videoPlaying = false;
         this.init();
     }
-    
+
     init() {
         this.loadStoriesData();
         this.createModal();
         this.bindEvents();
-        this.initializeCarousel();
     }
-    
-    loadStoriesData() {
-        // Get stories from window.stories or DOM elements
-        if (window.stories && window.stories.length > 0) {
-            this.stories = window.stories.map(story => ({
-                id: story.id,
-                userId: story.userId,
-                media: story.media,
-                mediaType: story.mediaType,
-                author: `${story.firstName} ${story.lastName}`,
-                avatar: story.avatar || 'images/profile.jpg',
-                createdAt: story.created_at
-            }));
-        } else {
-            // Fallback to DOM elements
-            const storyElements = document.querySelectorAll('.story[data-story-id]');
-            this.stories = Array.from(storyElements).map(element => ({
-                id: element.dataset.storyId,
-                userId: element.dataset.userId || '',
-                media: element.dataset.media || '',
-                mediaType: element.dataset.mediaType || 'image',
-                author: element.dataset.author || 'Unknown',
-                avatar: element.dataset.avatar || 'images/profile.jpg',
-                createdAt: element.dataset.createdAt || new Date().toISOString()
-            }));
-        }
-    }
-    
-    initializeCarousel() {
-        const storiesContainer = document.querySelector('.stories-container');
-        if (!storiesContainer) return;
-        
-        // Add scroll buttons for better navigation
-        this.addScrollButtons(storiesContainer);
-        
-        // Enable smooth scrolling
-        storiesContainer.style.scrollBehavior = 'smooth';
-        
-        // Add touch/swipe support for mobile
-        this.addTouchSupport(storiesContainer);
-    }
-    
-    addScrollButtons(container) {
-        const storiesSection = container.closest('.stories-section');
-        if (!storiesSection) return;
-        
-        // Create scroll buttons
-        const scrollLeft = document.createElement('button');
-        scrollLeft.className = 'story-scroll-btn story-scroll-left';
-        scrollLeft.innerHTML = '<i class="fas fa-chevron-left"></i>';
-        scrollLeft.onclick = () => this.scrollStories('left');
-        
-        const scrollRight = document.createElement('button');
-        scrollRight.className = 'story-scroll-btn story-scroll-right';
-        scrollRight.innerHTML = '<i class="fas fa-chevron-right"></i>';
-        scrollRight.onclick = () => this.scrollStories('right');
-        
-        // Add buttons to stories section
-        storiesSection.style.position = 'relative';
-        storiesSection.appendChild(scrollLeft);
-        storiesSection.appendChild(scrollRight);
-        
-        // Update button visibility based on scroll position
-        container.addEventListener('scroll', () => {
-            this.updateScrollButtons(container, scrollLeft, scrollRight);
-        });
-        
-        // Initial button state
-        this.updateScrollButtons(container, scrollLeft, scrollRight);
-    }
-    
-    updateScrollButtons(container, leftBtn, rightBtn) {
-        const { scrollLeft, scrollWidth, clientWidth } = container;
-        
-        leftBtn.style.display = scrollLeft > 0 ? 'flex' : 'none';
-        rightBtn.style.display = scrollLeft < scrollWidth - clientWidth - 10 ? 'flex' : 'none';
-    }
-    
-    scrollStories(direction) {
-        const container = document.querySelector('.stories-container');
-        const scrollAmount = 240; // Width of 2 stories
-        
-        if (direction === 'left') {
-            container.scrollLeft -= scrollAmount;
-        } else {
-            container.scrollLeft += scrollAmount;
-        }
-    }
-    
-    addTouchSupport(container) {
-        let startX = 0;
-        let scrollStart = 0;
-        
-        container.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            scrollStart = container.scrollLeft;
-        });
-        
-        container.addEventListener('touchmove', (e) => {
-            if (!startX) return;
-            
-            const currentX = e.touches[0].clientX;
-            const diff = startX - currentX;
-            container.scrollLeft = scrollStart + diff;
-        });
-        
-        container.addEventListener('touchend', () => {
-            startX = 0;
-            scrollStart = 0;
-        });
-    }
-    
-    bindEvents() {
-        // Story click events
-        document.addEventListener('click', (e) => {
-            const storyElement = e.target.closest('.story[data-story-id]');
-            if (storyElement && !storyElement.classList.contains('add-story')) {
-                e.preventDefault();
-                const storyId = storyElement.dataset.storyId;
-                this.openStory(storyId);
-            }
 
-            // Scroll button events (delegated, since buttons are dynamically created)
-            if (e.target.closest('.story-scroll-left')) {
-                e.preventDefault();
-                this.scrollStories('left');
-            }
-            if (e.target.closest('.story-scroll-right')) {
-                e.preventDefault();
-                this.scrollStories('right');
-            }
-        });
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (this.modal && this.modal.style.display === 'flex') {
-                switch(e.key) {
-                    case 'Escape':
-                        this.closeStory();
-                        break;
-                    case 'ArrowLeft':
-                        this.previousStory();
-                        break;
-                    case 'ArrowRight':
-                        this.nextStory();
-                        break;
-                    case ' ':
-                        e.preventDefault();
-                        this.togglePlayPause();
-                        break;
-                }
-            }
+    loadStoriesData() {
+        // Parse stories from DOM
+        const storyElements = document.querySelectorAll('.story[data-user-id]');
+        this.userStories = Array.from(storyElements).map(el => {
+            let stories = [];
+            try {
+                stories = JSON.parse(el.dataset.stories.replace(/&quot;/g,'"'));
+            } catch (e) {}
+            return {
+                userId: el.dataset.userId,
+                username: el.dataset.storyUsername,
+                avatar: el.dataset.storyAvatar,
+                stories: stories.map(story => ({
+                    media: story.media,
+                    mediaType: story.mediaType,
+                    // accept different name variants and fallback to now()
+                    createdAt: story.created_at || story.createdAt || new Date().toISOString()
+                }))
+            };
         });
     }
-    
+
     createModal() {
         this.modal = document.createElement('div');
         this.modal.className = 'story-modal';
+        this.modal.style.display = 'none';
         this.modal.innerHTML = `
             <div class="story-viewer">
                 <div class="story-header">
@@ -187,7 +57,7 @@ class StoryViewer {
                         <div class="story-progress-bar"></div>
                     </div>
                     <div class="story-user-info">
-                        <img src="" alt="User" class="story-user-avatar">
+                        <img src="" alt="User" class="story-user-avatar" onclick="window.location.href='profile?id=' + ">
                         <div class="story-user-details">
                             <span class="story-username"></span>
                             <span class="story-time"></span>
@@ -201,179 +71,197 @@ class StoryViewer {
                     <button class="story-nav-btn story-prev-btn">
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                    <div class="story-media-container">
-                        <!-- Story media will be loaded here -->
-                    </div>
+                    <div class="story-media-container"></div>
                     <button class="story-nav-btn story-next-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
             </div>
         `;
-        
         document.body.appendChild(this.modal);
-        
-        // Bind modal events
-        this.modal.querySelector('.story-close-btn').addEventListener('click', () => this.closeStory());
-        this.modal.querySelector('.story-prev-btn').addEventListener('click', () => this.previousStory());
-        this.modal.querySelector('.story-next-btn').addEventListener('click', () => this.nextStory());
-        
-        // Close on backdrop click
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) {
-                this.closeStory();
-            }
-        });
-        
         this.progressBar = this.modal.querySelector('.story-progress-bar');
+        // Bind modal events
+        this.modal.querySelector('.story-close-btn').onclick = () => this.closeViewer();
+        this.modal.querySelector('.story-prev-btn').onclick = () => this.prevStory();
+        this.modal.querySelector('.story-next-btn').onclick = () => this.nextStory();
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeViewer();
+        });
     }
-    
-    async openStory(storyId) {
-        try {
-            this.currentStoryIndex = this.stories.findIndex(s => s.id == storyId);
-            
-            if (this.currentStoryIndex === -1) {
-                this.currentStoryIndex = 0;
+
+    bindEvents() {
+        // Open story on click
+        document.addEventListener('click', (e) => {
+            const storyEl = e.target.closest('.story[data-user-id]');
+            if (storyEl && !storyEl.classList.contains('add-story')) {
+                e.preventDefault();
+                const userId = storyEl.dataset.userId;
+                this.openUserStories(userId);
             }
-            
-            this.showStory();
-            this.modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            
-        } catch (error) {
-            console.error('Error loading story:', error);
-            this.showErrorMessage('Failed to load story');
-        }
+        });
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (this.modal.style.display === 'flex') {
+                if (e.key === 'Escape') this.closeViewer();
+                if (e.key === 'ArrowLeft') this.prevStory();
+                if (e.key === 'ArrowRight') this.nextStory();
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    this.togglePlayPause();
+                }
+            }
+        });
     }
-    
+
+    openUserStories(userId) {
+        this.currentUserIndex = this.userStories.findIndex(u => u.userId == userId);
+        this.currentStoryIndex = 0;
+        this.showStory();
+        this.modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
     showStory() {
-        if (!this.stories.length) return;
-        
-        const story = this.stories[this.currentStoryIndex];
-        const mediaContainer = this.modal.querySelector('.story-media-container');
-        const userAvatar = this.modal.querySelector('.story-user-avatar');
-        const username = this.modal.querySelector('.story-username');
-        const storyTime = this.modal.querySelector('.story-time');
-        
+        this.clearTimer();
+        const user = this.userStories[this.currentUserIndex];
+        const story = user.stories[this.currentStoryIndex];
         // Update user info
-        userAvatar.src = story.avatar;
-        userAvatar.onerror = () => { userAvatar.src = 'images/profile.jpg'; };
-        username.textContent = story.author;
-        storyTime.textContent = this.formatTime(story.createdAt);
-        
-        // Clear previous media
+        const avatar = this.modal.querySelector('.story-user-avatar');
+        avatar.src = user.avatar;
+        avatar.onerror = () => { avatar.src = 'images/profile.jpg'; };
+        this.modal.querySelector('.story-username').textContent = user.username;
+        this.modal.querySelector('.story-time').textContent = this.formatTime(story.createdAt);
+        // Media
+        const mediaContainer = this.modal.querySelector('.story-media-container');
         mediaContainer.innerHTML = '';
-        
-        // Create media element
-        let mediaElement;
+        let mediaEl;
         if (story.mediaType === 'video') {
-            mediaElement = document.createElement('video');
-            mediaElement.controls = false;
-            mediaElement.autoplay = true;
-            mediaElement.muted = true;
-            mediaElement.loop = false;
-            mediaElement.addEventListener('ended', () => this.nextStory());
+            mediaEl = document.createElement('video');
+            mediaEl.src = story.media;
+            mediaEl.className = 'story-media';
+            mediaEl.autoplay = true;
+            mediaEl.muted = true;
+            mediaEl.playsInline = true;
+            mediaEl.controls = false;
+            mediaEl.onloadedmetadata = () => {
+                this.storyDuration = Math.min(mediaEl.duration * 1000, 15000); // max 15s
+                this.startProgress();
+                mediaEl.play();
+            };
+            mediaEl.onended = () => this.nextStory();
+            mediaEl.onerror = () => this.showError('Failed to load video');
+            mediaContainer.appendChild(mediaEl);
+            this.videoPlaying = true;
         } else {
-            mediaElement = document.createElement('img');
+            mediaEl = document.createElement('img');
+            mediaEl.src = story.media;
+            mediaEl.className = 'story-media';
+            mediaEl.alt = 'Story';
+            mediaEl.onload = () => {
+                this.storyDuration = 8000;
+                this.startProgress();
+            };
+            mediaEl.onerror = () => this.showError('Failed to load image');
+            mediaContainer.appendChild(mediaEl);
+            this.videoPlaying = false;
         }
-        
-        mediaElement.src = story.media;
-        mediaElement.className = 'story-media';
-        mediaElement.alt = 'Story content';
-        
-        mediaElement.addEventListener('load', () => {
-            this.startProgress();
-        });
-        
-        mediaElement.addEventListener('error', () => {
-            this.showErrorMessage('Failed to load media');
-        });
-        
-        mediaContainer.appendChild(mediaElement);
-        
-        // Update navigation buttons
-        const prevBtn = this.modal.querySelector('.story-prev-btn');
-        const nextBtn = this.modal.querySelector('.story-next-btn');
-        
-        prevBtn.style.display = this.currentStoryIndex > 0 ? 'flex' : 'none';
-        nextBtn.style.display = this.currentStoryIndex < this.stories.length - 1 ? 'flex' : 'none';
+        // Navigation buttons
+        this.modal.querySelector('.story-prev-btn').style.display =
+            (this.currentUserIndex > 0 || this.currentStoryIndex > 0) ? 'flex' : 'none';
+        this.modal.querySelector('.story-next-btn').style.display =
+            (this.currentUserIndex < this.userStories.length - 1 ||
+             this.currentStoryIndex < user.stories.length - 1) ? 'flex' : 'none';
     }
-    
+
     startProgress() {
         this.clearTimer();
         this.progressBar.style.width = '0%';
         this.isPlaying = true;
-        
-        let progress = 0;
-        const increment = 100 / (this.storyDuration / 50);
-        
-        this.timer = setInterval(() => {
+        let start = Date.now();
+        let duration = this.storyDuration;
+        const step = () => {
             if (!this.isPlaying) return;
-            
-            progress += increment;
-            this.progressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
+            let elapsed = Date.now() - start;
+            let percent = Math.min(100, (elapsed / duration) * 100);
+            this.progressBar.style.width = percent + '%';
+            if (percent < 100) {
+                this.timer = requestAnimationFrame(step);
+            } else {
                 this.nextStory();
             }
-        }, 50);
+        };
+        this.timer = requestAnimationFrame(step);
     }
-    
+
     clearTimer() {
         if (this.timer) {
-            clearInterval(this.timer);
+            cancelAnimationFrame(this.timer);
             this.timer = null;
         }
     }
-    
-    closeStory() {
+
+    nextStory() {
+        const user = this.userStories[this.currentUserIndex];
+        if (this.currentStoryIndex < user.stories.length - 1) {
+            this.currentStoryIndex++;
+            this.showStory();
+        } else if (this.currentUserIndex < this.userStories.length - 1) {
+            this.currentUserIndex++;
+            this.currentStoryIndex = 0;
+            this.showStory();
+        } else {
+            this.closeViewer();
+        }
+    }
+
+    prevStory() {
+        if (this.currentStoryIndex > 0) {
+            this.currentStoryIndex--;
+            this.showStory();
+        } else if (this.currentUserIndex > 0) {
+            this.currentUserIndex--;
+            this.currentStoryIndex = this.userStories[this.currentUserIndex].stories.length - 1;
+            this.showStory();
+        }
+    }
+
+    closeViewer() {
         this.clearTimer();
         this.modal.style.display = 'none';
         document.body.style.overflow = '';
     }
-    
-    nextStory() {
-        if (this.currentStoryIndex < this.stories.length - 1) {
-            this.currentStoryIndex++;
-            this.showStory();
-        } else {
-            this.closeStory();
-        }
-    }
-    
-    previousStory() {
-        if (this.currentStoryIndex > 0) {
-            this.currentStoryIndex--;
-            this.showStory();
-        }
-    }
-    
+
     togglePlayPause() {
         this.isPlaying = !this.isPlaying;
-        
         if (this.isPlaying) {
             this.startProgress();
+            // Resume video if paused
+            const mediaEl = this.modal.querySelector('.story-media');
+            if (mediaEl && mediaEl.tagName === 'VIDEO') mediaEl.play();
         } else {
             this.clearTimer();
+            // Pause video if playing
+            const mediaEl = this.modal.querySelector('.story-media');
+            if (mediaEl && mediaEl.tagName === 'VIDEO') mediaEl.pause();
         }
     }
-    
+
     formatTime(dateString) {
-        const options = {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        };
-        
-        return new Date(dateString).toLocaleString(undefined, options);
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        if (Number.isNaN(d.getTime())) return '';
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return '';
+        if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     }
-    
-    showErrorMessage(message) {
-        // Implement your error handling logic here
-        alert(message);
+
+    showError(msg) {
+        const mediaContainer = this.modal.querySelector('.story-media-container');
+        mediaContainer.innerHTML = `<div class="story-error"><i class="fas fa-exclamation-circle"></i><p>${msg}</p></div>`;
+        this.progressBar.style.width = '100%';
     }
 }
 

@@ -1,7 +1,10 @@
 {
-      "autoload": {
-    "classmap": [
-      "./"
-    ]
-  }
+    "autoload": {
+        "classmap": [
+            "./"
+        ]
+    },
+    "require": {
+        "cboden/ratchet": "^0.4.4"
+    }
 }

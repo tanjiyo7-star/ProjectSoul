@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 22, 2025 at 06:32 PM
+-- Generation Time: Aug 27, 2025 at 05:18 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -58,7 +58,11 @@ INSERT INTO `chats` (`id`, `type`, `created_at`) VALUES
 (47, 'direct', '2025-08-17 08:48:29'),
 (48, 'direct', '2025-08-17 12:49:21'),
 (49, 'direct', '2025-08-19 16:36:25'),
-(50, 'direct', '2025-08-20 03:29:03');
+(50, 'direct', '2025-08-20 03:29:03'),
+(51, 'direct', '2025-08-25 19:27:33'),
+(52, 'direct', '2025-08-26 04:00:38'),
+(53, 'direct', '2025-08-26 04:03:15'),
+(54, 'direct', '2025-08-26 06:14:33');
 
 -- --------------------------------------------------------
 
@@ -95,7 +99,15 @@ INSERT INTO `chat_participants` (`chatId`, `userId`, `joined_at`) VALUES
 (49, 19, '2025-08-19 16:36:25'),
 (49, 25, '2025-08-19 16:36:25'),
 (50, 24, '2025-08-20 03:29:03'),
-(50, 25, '2025-08-20 03:29:03');
+(50, 25, '2025-08-20 03:29:03'),
+(51, 25, '2025-08-25 19:27:33'),
+(51, 26, '2025-08-25 19:27:33'),
+(52, 19, '2025-08-26 04:00:38'),
+(52, 27, '2025-08-26 04:00:38'),
+(53, 24, '2025-08-26 04:03:15'),
+(53, 27, '2025-08-26 04:03:15'),
+(54, 25, '2025-08-26 06:14:33'),
+(54, 27, '2025-08-26 06:14:33');
 
 -- --------------------------------------------------------
 
@@ -123,7 +135,11 @@ INSERT INTO `comments` (`id`, `userId`, `postId`, `content`, `created_at`) VALUE
 (81, 19, 85, 'hello', '2025-08-17 12:39:28'),
 (82, 19, 79, 'hello', '2025-08-18 14:51:51'),
 (83, 25, 85, 'hy', '2025-08-19 16:33:54'),
-(84, 25, 96, 'hello', '2025-08-20 02:26:56');
+(84, 25, 96, 'hello', '2025-08-20 02:26:56'),
+(85, 27, 90, 'fdksfj', '2025-08-26 04:03:02'),
+(86, 25, 96, 'kdskfj', '2025-08-26 04:33:29'),
+(92, 27, 99, '🎧', '2025-08-27 14:02:52'),
+(113, 25, 110, 'fix', '2025-08-27 15:14:57');
 
 -- --------------------------------------------------------
 
@@ -146,7 +162,13 @@ CREATE TABLE `friends` (
 
 INSERT INTO `friends` (`id`, `userId`, `friendId`, `status`, `actionUserId`, `created_at`) VALUES
 (84, 25, 19, 'accepted', 19, '2025-08-19 16:34:23'),
-(85, 25, 24, 'pending', 25, '2025-08-19 16:37:44');
+(85, 25, 24, 'pending', 25, '2025-08-19 16:37:44'),
+(87, 25, 26, 'pending', 25, '2025-08-26 10:47:29'),
+(88, 25, 28, 'pending', 25, '2025-08-26 10:47:33'),
+(91, 27, 26, 'pending', 27, '2025-08-26 16:05:29'),
+(92, 27, 28, 'pending', 27, '2025-08-26 16:05:49'),
+(93, 27, 19, 'pending', 27, '2025-08-26 16:12:45'),
+(100, 25, 27, 'pending', 25, '2025-08-26 18:24:12');
 
 -- --------------------------------------------------------
 
@@ -180,13 +202,23 @@ INSERT INTO `likes` (`id`, `userId`, `postId`, `created_at`) VALUES
 (703, 25, 90, '2025-08-19 16:33:12'),
 (704, 25, 85, '2025-08-19 16:33:13'),
 (705, 25, 94, '2025-08-19 16:45:15'),
-(706, 25, 93, '2025-08-19 16:45:36'),
-(710, 25, 96, '2025-08-20 05:24:56'),
 (711, 19, 94, '2025-08-20 05:26:40'),
 (713, 19, 88, '2025-08-20 11:11:27'),
 (714, 19, 80, '2025-08-20 11:11:51'),
-(718, 19, 90, '2025-08-20 15:40:34'),
-(720, 19, 96, '2025-08-22 14:15:26');
+(720, 19, 96, '2025-08-22 14:15:26'),
+(721, 25, 75, '2025-08-25 19:28:20'),
+(730, 19, 90, '2025-08-26 03:58:12'),
+(731, 27, 96, '2025-08-26 04:02:49'),
+(732, 27, 92, '2025-08-26 04:02:56'),
+(733, 28, 97, '2025-08-26 04:31:10'),
+(734, 28, 96, '2025-08-26 04:32:19'),
+(737, 25, 96, '2025-08-26 09:34:37'),
+(742, 25, 99, '2025-08-26 16:35:28'),
+(743, 25, 97, '2025-08-26 16:37:35'),
+(745, 25, 110, '2025-08-27 13:17:00'),
+(746, 27, 109, '2025-08-27 14:01:03'),
+(747, 27, 106, '2025-08-27 14:02:07'),
+(749, 25, 93, '2025-08-27 14:05:15');
 
 -- --------------------------------------------------------
 
@@ -260,7 +292,14 @@ INSERT INTO `messages` (`id`, `chatId`, `senderId`, `content`, `created_at`, `is
 (216, 48, 19, '👍', '2025-08-20 15:01:43', 0, NULL),
 (217, 48, 19, '😂', '2025-08-20 15:41:48', 0, NULL),
 (218, 49, 25, 'Hello', '2025-08-22 14:17:37', 1, NULL),
-(219, 49, 19, '🤔', '2025-08-22 14:19:14', 1, NULL);
+(219, 49, 19, '🤔', '2025-08-22 14:19:14', 1, NULL),
+(220, 52, 19, 'hi', '2025-08-26 04:00:54', 1, NULL),
+(221, 54, 27, 'hi', '2025-08-26 06:14:48', 1, NULL),
+(222, 54, 25, 'hi', '2025-08-26 06:18:22', 1, NULL),
+(223, 54, 25, 'dkjf', '2025-08-26 16:39:32', 1, NULL),
+(224, 54, 27, 'df', '2025-08-26 16:39:40', 1, NULL),
+(225, 54, 25, 'sss', '2025-08-26 16:39:46', 1, NULL),
+(226, 54, 25, 'http://localhost:8000/comments?post_id=110', '2025-08-26 18:43:06', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -334,7 +373,37 @@ INSERT INTO `notifications` (`id`, `fromUserId`, `toUserId`, `postId`, `message`
 (0, 19, 24, NULL, 'accepted your friend request.', 'read', '2025-08-17 12:47:18'),
 (0, 19, 24, 95, 'liked your post.', 'read', '2025-08-17 12:47:36'),
 (0, 19, 24, NULL, 'unfriended you', 'unread', '2025-08-18 12:34:25'),
-(0, 25, 24, NULL, 'sent you a friend request.', 'unread', '2025-08-19 16:37:44');
+(0, 25, 24, NULL, 'sent you a friend request.', 'unread', '2025-08-19 16:37:44'),
+(0, 25, 19, 75, 'liked your post.', 'read', '2025-08-25 19:28:20'),
+(0, 27, 19, 92, 'liked your post.', 'read', '2025-08-26 04:02:56'),
+(0, 27, 19, 90, 'commented on your post.', 'read', '2025-08-26 04:03:02'),
+(0, 28, 27, 97, 'liked your post.', 'read', '2025-08-26 04:31:10'),
+(0, 25, 27, NULL, 'accepted your friend request.', 'read', '2025-08-26 06:19:30'),
+(0, 25, 27, 97, 'liked your post.', 'read', '2025-08-26 06:22:10'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 06:22:15'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 09:34:47'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 09:34:47'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 09:34:47'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 09:34:48'),
+(0, 25, 26, NULL, 'sent you a friend request.', 'unread', '2025-08-26 10:47:29'),
+(0, 25, 28, NULL, 'sent you a friend request.', 'unread', '2025-08-26 10:47:33'),
+(0, 25, 27, NULL, 'sent you a friend request.', 'read', '2025-08-26 10:47:34'),
+(0, 25, 27, NULL, 'sent you a friend request.', 'read', '2025-08-26 16:05:03'),
+(0, 27, 26, NULL, 'sent you a friend request.', 'unread', '2025-08-26 16:05:29'),
+(0, 27, 28, NULL, 'sent you a friend request.', 'unread', '2025-08-26 16:05:49'),
+(0, 27, 19, NULL, 'sent you a friend request.', 'unread', '2025-08-26 16:12:45'),
+(0, 25, 27, NULL, 'accepted your friend request.', 'read', '2025-08-26 16:24:14'),
+(0, 25, 27, NULL, 'unfriended you', 'read', '2025-08-26 16:25:28'),
+(0, 25, 27, 99, 'liked your post.', 'read', '2025-08-26 16:35:28'),
+(0, 25, 27, 97, 'liked your post.', 'read', '2025-08-26 16:37:35'),
+(0, 25, 27, NULL, 'accepted your friend request.', 'read', '2025-08-26 17:45:53'),
+(0, 25, 27, NULL, 'unfriended you', 'read', '2025-08-26 18:17:16'),
+(0, 25, 27, NULL, 'sent you a friend request.', 'read', '2025-08-26 18:17:46'),
+(0, 25, 27, NULL, 'accepted your friend request.', 'read', '2025-08-26 18:18:17'),
+(0, 25, 27, NULL, 'accepted your friend request.', 'read', '2025-08-26 18:19:41'),
+(0, 25, 27, NULL, 'unfriended you', 'read', '2025-08-26 18:24:02'),
+(0, 25, 27, NULL, 'sent you a friend request.', 'read', '2025-08-26 18:24:12'),
+(0, 25, 19, 93, 'liked your post.', 'unread', '2025-08-27 14:05:15');
 
 -- --------------------------------------------------------
 
@@ -371,7 +440,21 @@ INSERT INTO `posts` (`id`, `caption`, `photo`, `created_at`, `isPublic`, `userId
 (93, 'hello welcome', NULL, '2025-08-15 19:14:10', 0, 19),
 (94, ' Smule https://www.smule.com › song › arrangement စာ(စိုးလွင်လွင်) · စာ · တေးရေး-ညီညီသွင် · ((((((((((((( · ကိုယ်မြတ်နိုးဖူးသူရဲ့လက်နဲ့ · ကိုယ်တိုင်ရေးလို့ထားရှာတယ် · အရင်တုန်းက ရင်ခုန်ဖူးခဲ့တဲ့ · စာလုံးဝိုင်းလေးတွေကို · ပြန်မြင်လိုက်ရတော့. စာ - စိုးလွင်လွင် [Lyrics] Sar-SoeLwinLwin  YouTube · Lyrics By Lemon ကြည့်ရှုမှု ၅.၅ သန်း+ · ပြီးခဲ့သည့် ၂ နှစ်  ၃:၂၉ Sar #SoeLwinLwin #LyricsByLemon #MyanmarMusic #VintageSong Credits to the owner of this audio. Disclaimer : I do not own the original song. စာ - Unicode - Lyrics and Music by အေသင်ချိုဆွေ  Smule https://www.smule.com › song › arrangement ဒီစာ ကို ဖွင့်လို့ မဖတ်တော့ဘူး. ဒီစာ ကို ဖွင့်လို့ မဖတ်တော့ဘူး. ဒီစာ ကို ဖွင့်လို့. မဖတ်ကြည့်တော့ဘူးကွယ်... ကိုယ်ခံစားပြီးနေရ နေ့ရက်တွေဟာ. ဟောင်းနွမ်းသွားပြီပဲ. ဘယ်သဘောမျိုး အကြံစည်မျိုးနဲ့. ထပ်မံ နိုပ်စက်ရပြန်သလဲ', NULL, '2025-08-16 13:36:32', 0, 19),
 (95, 'Friend', 'uploads/1755434763_video6107092037738173841.mp4', '2025-08-17 12:46:03', 0, 24),
-(96, 'Friend', 'uploads/1755656800_0b27aa75eede5e28f47e99fc0362dcc4.png', '2025-08-20 02:26:40', 1, 25);
+(96, 'Friend', 'uploads/1755656800_0b27aa75eede5e28f47e99fc0362dcc4.png', '2025-08-20 02:26:40', 1, 25),
+(97, 'video', 'uploads/1756181109_video6107092037738173841.mp4', '2025-08-26 04:05:09', 1, 27),
+(98, 'video', NULL, '2025-08-26 06:20:27', 0, 27),
+(99, 'hiii', NULL, '2025-08-26 06:20:51', 1, 27),
+(100, ' ', 'uploads/1756226318_8be1641a-f5b5-40ec-b348-d29924729d34.jpg', '2025-08-26 16:38:38', 0, 25),
+(101, 'video', NULL, '2025-08-26 17:31:27', 1, 27),
+(102, 'Friend', NULL, '2025-08-26 17:44:37', 1, 25),
+(103, 'video', NULL, '2025-08-26 17:45:18', 0, 27),
+(104, 'hiii', NULL, '2025-08-26 17:46:14', 0, 27),
+(105, 'Friend', NULL, '2025-08-26 17:46:51', 1, 25),
+(106, 'video', NULL, '2025-08-26 17:47:41', 0, 27),
+(107, ' ', 'uploads/1756230847_6154566214387615343.jpg', '2025-08-26 17:54:07', 0, 27),
+(108, 'df', NULL, '2025-08-26 17:54:23', 0, 25),
+(109, 'video', NULL, '2025-08-26 17:54:42', 0, 27),
+(110, 'Friend', NULL, '2025-08-26 17:58:10', 0, 25);
 
 -- --------------------------------------------------------
 
@@ -394,8 +477,9 @@ CREATE TABLE `profiles` (
 INSERT INTO `profiles` (`id`, `bio`, `avatar`, `coverPhoto`, `location`) VALUES
 (19, 'Hello', 'uploads/avatars/avatar_19_1755331544.jfif', NULL, 'Yangon'),
 (24, 'World is worth fighting for...', 'uploads/avatars/avatar_24_1755434660.jfif', NULL, 'Maubin'),
-(25, 'Hello', 'uploads/avatars/avatar_25_1755660765.jpg', NULL, 'Pyapon'),
-(26, '', 'uploads/avatars/avatar_26_1755877804.jfif', NULL, '');
+(25, 'Hello', 'uploads/avatars/avatar_25_1756289856.jpg', NULL, 'Pyapon'),
+(26, '', 'uploads/avatars/avatar_26_1755877804.jfif', NULL, ''),
+(27, '', 'uploads/avatars/avatar_27_1756181065.jpg', NULL, '');
 
 -- --------------------------------------------------------
 
@@ -447,7 +531,12 @@ INSERT INTO `stories` (`id`, `userId`, `media`, `mediaType`, `created_at`, `expi
 (48, 19, 'uploads/stories/68a5abfea2839_1755687934.png', 'image', '2025-08-20 11:05:34', '2025-08-21 11:05:34'),
 (49, 19, 'uploads/stories/68a87ada371bb_1755871962.jpeg', 'image', '2025-08-22 14:12:42', '2025-08-23 14:12:42'),
 (50, 26, 'uploads/stories/68a891cd28e27_1755877837.jfif', 'image', '2025-08-22 15:50:37', '2025-08-23 15:50:37'),
-(51, 25, 'uploads/stories/68a892584f884_1755877976.jfif', 'image', '2025-08-22 15:52:56', '2025-08-23 15:52:56');
+(51, 25, 'uploads/stories/68a892584f884_1755877976.jfif', 'image', '2025-08-22 15:52:56', '2025-08-23 15:52:56'),
+(52, 25, 'uploads/stories/68acb93c3ba12_1756150076.jpg', 'image', '2025-08-25 19:27:56', '2025-08-26 19:27:56'),
+(53, 27, 'uploads/stories/68ad32184c7ef_1756181016.jpg', 'image', '2025-08-26 04:03:36', '2025-08-27 04:03:36'),
+(54, 27, 'uploads/stories/68ad322640e8b_1756181030.jpg', 'image', '2025-08-26 04:03:50', '2025-08-27 04:03:50'),
+(55, 25, 'uploads/stories/68ad3a9b4fd07_1756183195.jpg', 'image', '2025-08-26 04:39:55', '2025-08-27 04:39:55'),
+(56, 25, 'uploads/stories/68aebe38af821_1756282424.jpg', 'image', '2025-08-27 08:13:44', '2025-08-28 08:13:44');
 
 -- --------------------------------------------------------
 
@@ -463,6 +552,7 @@ CREATE TABLE `users` (
   `gender` varchar(20) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `last_seen` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `remember_token` varchar(255) DEFAULT NULL
@@ -472,11 +562,13 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `firstName`, `lastName`, `birthdate`, `gender`, `email`, `password`, `created_at`, `updated_at`, `remember_token`) VALUES
-(19, 'strategy', 'Htut', '2011-02-16', 'male', 'han@gmail.com', '$2y$10$Z0Dw.KMRq2.AUADGvvhWWOG9ovUKd4syA4gSc0/e94Y1NGxN.FCYe', '2025-08-03 07:34:28', '2025-08-17 10:40:10', '9e67c4b2589ee38f8f4b64e972d86e8b1c1a5badd42e099eecd825ade53822f8'),
-(24, 'Tony', 'Montana', '2006-11-18', 'M', 'tony@gmail.com', '$2y$10$h6G/aKjtRdQc2KvQm8Gb8OdGViMYx2Mq/heS3ozARa.tOPlDS1gIm', '2025-08-17 12:42:53', '2025-08-17 12:45:19', NULL),
-(25, 'Han', 'Htut', '2005-07-15', 'M', 'thar@gmail.com', '$2y$10$vjcMV9IUbcRKALIXqjJbNeFzDnIlckbf5zyrnCy3NaFHdtO5pPY9O', '2025-08-19 16:31:16', '2025-08-20 03:25:07', NULL),
-(26, 'Han', 'Htut', '1979-11-04', 'female', 'htut@gmail.com', '$2y$10$/h8Bh9llw9bBvGt9Oydnvuw7dIMGZC1BGb7GQF4V4ihElyIdb5mry', '2025-08-22 15:49:35', '2025-08-22 15:49:35', NULL);
+INSERT INTO `users` (`id`, `firstName`, `lastName`, `birthdate`, `gender`, `email`, `password`, `last_seen`, `created_at`, `updated_at`, `remember_token`) VALUES
+(19, 'strategy', 'Htut', '2011-02-16', 'male', 'han@gmail.com', '$2y$10$Z0Dw.KMRq2.AUADGvvhWWOG9ovUKd4syA4gSc0/e94Y1NGxN.FCYe', '2025-08-26 04:31:10', '2025-08-03 07:34:28', '2025-08-26 04:31:10', '9e67c4b2589ee38f8f4b64e972d86e8b1c1a5badd42e099eecd825ade53822f8'),
+(24, 'Tony', 'Montana', '2006-11-18', 'M', 'tony@gmail.com', '$2y$10$h6G/aKjtRdQc2KvQm8Gb8OdGViMYx2Mq/heS3ozARa.tOPlDS1gIm', '2025-08-26 04:12:34', '2025-08-17 12:42:53', '2025-08-17 12:45:19', NULL),
+(25, 'Han', 'Htut', '2005-07-15', 'M', 'thar@gmail.com', '$2y$10$vjcMV9IUbcRKALIXqjJbNeFzDnIlckbf5zyrnCy3NaFHdtO5pPY9O', '2025-08-27 15:16:29', '2025-08-19 16:31:16', '2025-08-27 15:16:29', NULL),
+(26, 'Han', 'Htut', '1979-11-04', 'female', 'htut@gmail.com', '$2y$10$/h8Bh9llw9bBvGt9Oydnvuw7dIMGZC1BGb7GQF4V4ihElyIdb5mry', '2025-08-26 04:12:34', '2025-08-22 15:49:35', '2025-08-22 15:49:35', NULL),
+(27, 'Han', 'Thar Htut', '2005-01-14', 'male', 'htuthanthar8@gmail.com', '$2y$12$tsIU/8r881YvnGzw.TqWieUPoK37HG7XuU.UZ8KibcvkfhRi09LU2', '2025-08-27 15:17:58', '2025-08-26 04:00:04', '2025-08-27 15:17:58', NULL),
+(28, 'Khin Myint', 'Myat', '2005-05-17', 'female', 'khinmyintmyat798@gmail.com', '$2y$12$QWFCiBeSjMXen5UQHen0keoKDD1p8HTuD3JPmQKDCRdyoRchEIKbq', '2025-08-26 04:32:58', '2025-08-26 04:30:54', '2025-08-26 04:32:58', NULL);
 
 --
 -- Indexes for dumped tables
@@ -582,49 +674,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `chats`
 --
 ALTER TABLE `chats`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=114;
 
 --
 -- AUTO_INCREMENT for table `friends`
 --
 ALTER TABLE `friends`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
 -- AUTO_INCREMENT for table `likes`
 --
 ALTER TABLE `likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=721;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=750;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=227;
 
 --
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `stories`
 --
 ALTER TABLE `stories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- Constraints for dumped tables

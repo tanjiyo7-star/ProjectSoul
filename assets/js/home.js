@@ -218,10 +218,6 @@ function createShareModal() {
                     <i class="fas fa-link"></i>
                     <span>Copy Link</span>
                 </button>
-                <button class="share-option" onclick="shareToFriends()">
-                    <i class="fas fa-user-friends"></i>
-                    <span>Share to Friends</span>
-                </button>
             </div>
         </div>
     `;

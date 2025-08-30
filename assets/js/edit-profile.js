@@ -6,6 +6,7 @@
 // Global variables
 let selectedAvatarFile = null;
 let isPasswordChangeEnabled = false;
+let isSubmitting = false; // <--- ADDED
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -256,13 +257,20 @@ function togglePasswordChange() {
  */
 async function updateProfile(event) {
     event.preventDefault();
-    
+
+    // Prevent double submission if a request is already in progress
+    if (isSubmitting) {
+        return;
+    }
+    isSubmitting = true;
+
     const form = event.target;
     const formData = new FormData(form);
     
     // Validate form
     if (!validateForm(form)) {
         showToast('error', 'Please fix the errors below');
+        isSubmitting = false; // <--- ensure flag reset on early return
         return;
     }
     
@@ -271,6 +279,7 @@ async function updateProfile(event) {
     if (!currentPassword) {
         showToast('error', 'Please enter your current password to save changes');
         document.getElementById('currentPassword').focus();
+        isSubmitting = false; // <--- ensure flag reset
         return;
     }
     
@@ -316,6 +325,7 @@ async function updateProfile(event) {
         showToast('error', 'Network error occurred');
     } finally {
         showLoading(false);
+        isSubmitting = false; // <--- RESET FLAG
     }
 }
 

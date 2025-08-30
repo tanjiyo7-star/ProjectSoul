@@ -71,7 +71,7 @@
                     </section>
 
                     <!-- Profile Form -->
-                    <form id="profileForm" class="profile-form" onsubmit="updateProfile(event)">
+                    <form id="profileForm" class="profile-form">
                         <div class="form-section">
                             <h3 class="section-title">
                                 <i class="fas fa-user"></i>

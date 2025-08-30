@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/notifications.css" />
+    <!-- <script src="/assets/js/real-time.js" defer></script> -->
     <script src="/assets/js/notifications.js" defer></script>
 </head>
 <body>

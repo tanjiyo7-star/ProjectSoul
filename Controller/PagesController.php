@@ -32,7 +32,11 @@ class PagesController {
                 header("Location: /home");
                 exit();
             } else {
-                $error = 'Invalid email or password.';
+                $_SESSION['error'] = 'Invalid email or password.';
+                echo "<script>
+                    alert('Invalid email or password.');
+                    window.location.href = '/';
+                </script>";
             }
         }
     }
@@ -109,7 +113,7 @@ class PagesController {
             $date = date('m-d', strtotime($birthdate));
             $zodiacs = [
                 ['sign' => 'Capricorn ♑', 'start' => '12-22', 'end' => '01-19'],
-                ['sign' => 'Aquarius ♒ ',  'start' => '01-20', 'end' => '02-18'],
+                ['sign' => 'Aquarius ♒',  'start' => '01-20', 'end' => '02-18'],
                 ['sign' => 'Pisces ♓',    'start' => '02-19', 'end' => '03-20'],
                 ['sign' => 'Aries ♈',     'start' => '03-21', 'end' => '04-19'],
                 ['sign' => 'Taurus ♉',    'start' => '04-20', 'end' => '05-20'],
@@ -599,7 +603,6 @@ class PagesController {
                     $result = $queryBuilder->addComment($userId, $postId, $comment);
                     
                     if ($result) {
-                        // Add notification for comment
                         $postOwnerSql = "SELECT userId FROM posts WHERE id = :postId";
                         $stmt = $queryBuilder->pdo->prepare($postOwnerSql);
                         $stmt->execute(['postId' => $postId]);
@@ -617,7 +620,7 @@ class PagesController {
                     header('Content-Type: application/json');
                     echo json_encode(['success' => true, 'message' => 'Comment added successfully']);
                     exit;
-                }
+                }   
                 
                 header('Location: /home');
                 exit();
@@ -960,7 +963,7 @@ public function apiLatestMessages() {
         // }
 
         // 2) Fetch messages newer than sinceId (to avoid duplicates)
-        $sql = "SELECT m.id, m.chatId, m.senderId, m.content, m.created_at,
+        $sql = "SELECT m.id, m.chatId, m.senderId, m.content, m.created_at,m.is_read,
                        u.firstName, u.lastName, p.avatar
                 FROM messages m
                 JOIN users u ON u.id = m.senderId
@@ -977,8 +980,35 @@ public function apiLatestMessages() {
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
     }
-    exit();
 }
+
+    public function apiMessageStatus() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+
+        try {
+            $queryBuilder = new queryBuilder();
+            $messageStatus = [];
+
+            $sql = "SELECT id, is_read FROM messages WHERE senderId = :userId";
+            $stmt = $queryBuilder->pdo->prepare($sql);
+            $stmt->execute(['userId' => $_SESSION['user_id']]);
+
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $messageStatus[$row['id']] = $row['is_read'];
+            }
+
+            echo json_encode(['messageStatus' => $messageStatus]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 
 
     
@@ -1364,5 +1394,86 @@ public function apiLatestMessages() {
         echo json_encode(['count' => $count]);
         exit;
     }
+
+    public function apiMarkMessagesRead() {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            exit();
+        }
+
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            exit();
+        }
+
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $chatId = isset($input['chatId']) ? (int)$input['chatId'] : 0;
+            $messageIds = isset($input['messageIds']) && is_array($input['messageIds']) ? $input['messageIds'] : [];
+
+            if ($chatId <= 0 || empty($messageIds)) {
+                echo json_encode(['success' => true, 'updated' => [], 'message' => 'Nothing to mark read']);
+                exit();
+            }
+
+            // sanitize ids -> keep only positive integers
+            $cleanIds = [];
+            foreach ($messageIds as $mid) {
+                $id = (int)$mid;
+                if ($id > 0) $cleanIds[] = $id;
+            }
+            if (empty($cleanIds)) {
+                echo json_encode(['success' => true, 'updated' => []]);
+                exit();
+            }
+
+            $qb = new queryBuilder();
+            $userId = (int)$_SESSION['user_id'];
+
+            // Find which message ids are valid to mark as read (belong to this chat, not sent by current user, currently unread)
+            $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
+            $selectSql = "SELECT id FROM messages 
+                      WHERE chatId = ? 
+                        AND id IN ($placeholders)
+                        AND senderId != ? 
+                        AND is_read = 0";
+        $selectStmt = $qb->pdo->prepare($selectSql);
+
+        // build params: chatId, ids..., userId
+        $params = array_merge([$chatId], $cleanIds, [$userId]);
+        $selectStmt->execute($params);
+        $rows = $selectStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($rows)) {
+            echo json_encode(['success' => true, 'updated' => []]);
+            exit();
+        }
+
+        $toUpdate = array_map(function($r){ return (int)$r['id']; }, $rows);
+        $placeholders2 = implode(',', array_fill(0, count($toUpdate), '?'));
+
+        // Update those messages: set is_read = 1 and optional read_at timestamp
+        $updateSql = "UPDATE messages 
+                      SET is_read = 1, read_at = NOW() 
+                      WHERE chatId = ? 
+                        AND id IN ($placeholders2)
+                        AND senderId != ? 
+                        AND is_read = 0";
+        $updateStmt = $qb->pdo->prepare($updateSql);
+        $updateParams = array_merge([$chatId], $toUpdate, [$userId]);
+        $updateStmt->execute($updateParams);
+
+        echo json_encode(['success' => true, 'updated' => $toUpdate, 'count' => $updateStmt->rowCount()]);
+        exit();
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error', 'detail' => $e->getMessage()]);
+        exit();
+    }
+ }
 }
-?>

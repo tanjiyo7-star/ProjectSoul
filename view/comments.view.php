@@ -109,7 +109,7 @@
                 <section class="comments-section">
                     <div class="comments-header">
                         <h3>Comments</h3>
-                        <div class="sort-options">
+                        <!-- <div class="sort-options">
                             <button class="sort-btn active" data-sort="newest">
                                 <i class="fas fa-clock"></i>
                                 Newest
@@ -118,7 +118,7 @@
                                 <i class="fas fa-history"></i>
                                 Oldest
                             </button>
-                        </div>
+                        </div> -->
                     </div>
 
                     <!-- Add Comment Form -->
@@ -138,7 +138,7 @@
                                               required></textarea>
                                     <div class="input-actions">
                                         <button type="button" class="emoji-btn" title="Add emoji">
-                                            <i class="fas fa-smile"></i>
+                                            <i class="fas fa-"></i>
                                         </button>
                                         <button type="submit" class="submit-btn">
                                             <i class="fas fa-paper-plane"></i>
@@ -191,11 +191,11 @@
                                                 <i class="far fa-heart"></i>
                                                 <span>Like</span>
                                             </button>
-                                            <button class="comment-action-btn reply-btn" 
+                                            <!-- <button class="comment-action-btn reply-btn" 
                                                     data-comment-id="<?= $comment['id'] ?>">
                                                 <i class="fas fa-reply"></i>
                                                 <span>Reply</span>
-                                            </button>
+                                            </button> -->
                                             <?php if ($comment['userId'] == $_SESSION['user_id']): ?>
                                                 <button class="comment-action-btn delete-btn" 
                                                         data-comment-id="<?= $comment['id'] ?>"

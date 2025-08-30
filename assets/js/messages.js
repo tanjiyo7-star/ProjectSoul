@@ -6,9 +6,13 @@ document.addEventListener('DOMContentLoaded', function () {
 let pollingInterval;
 let pollingErrorCount = 0;
 const MAX_POLLING_ERRORS = 5;
-let lastMessageId = 0;          // <-- API ကို sinceId နဲ့ခေါ်ဖို့
-let initialScrollDone = false;  // <-- first load မှာပဲ bottom ဆွဲချ (user ကို မလှုပ်ရှားစေချင်)
-let hasUserManuallyScrolledUp = false; // <-- user ကိုယ်တိုင် အပေါ်စောင်းသွားလား ချိတ်မိထားမယ်
+let lastMessageId = 0;
+let initialScrollDone = false;
+let hasUserManuallyScrolledUp = false;
+
+// NEW: keyboard/viewport helpers
+let visualViewportListener = null;
+let originalMessagesAreaPaddingBottom = '';
 
 function initializeMessages() {
     const messagesArea = document.getElementById('messagesArea');
@@ -20,6 +24,9 @@ function initializeMessages() {
         if (!initialScrollDone) {
             scrollToBottom(messagesArea);
             initialScrollDone = true;
+
+            // <<< NEW: initial load မှာ bottom ရှိရင် visible received မက်ဆေ့များကို mark read ခေါ်တယ် >>>
+            markMessagesAsRead();
         }
 
         // user manual scroll ကို track
@@ -34,28 +41,7 @@ function initializeMessages() {
         messageForm.addEventListener('submit', handleMessageSubmit);
     }
 
-    // modal buttons...
-    const newChatBtn = document.getElementById('newChatBtn');
-    const startChatBtn = document.getElementById('startChatBtn');
-    const newChatModal = document.getElementById('newChatModal');
-    const closeModal = document.getElementById('closeModal');
-
-    if (newChatBtn) newChatBtn.addEventListener('click', () => showModal(newChatModal));
-    if (startChatBtn) startChatBtn.addEventListener('click', () => showModal(newChatModal));
-    if (closeModal) closeModal.addEventListener('click', () => hideModal(newChatModal));
-    if (newChatModal) {
-        newChatModal.addEventListener('click', (e) => { if (e.target === newChatModal) hideModal(newChatModal); });
-    }
-
-    // chat search
-    const chatSearch = document.getElementById('chatSearch');
-    if (chatSearch) chatSearch.addEventListener('input', handleChatSearch);
-
-    // user search (modal)
-    const userSearch = document.getElementById('userSearch');
-    if (userSearch) userSearch.addEventListener('input', handleUserSearch);
-
-    // Enter => submit
+    // Enter => submit + input focus handling
     const messageInput = document.getElementById('messageInput');
     if (messageInput && messageForm) {
         messageInput.addEventListener('keypress', function (e) {
@@ -65,6 +51,10 @@ function initializeMessages() {
             }
         });
         messageInput.focus();
+
+        // NEW: focus/blur handlers to improve mobile layout when keyboard opens
+        messageInput.addEventListener('focus', handleInputFocus);
+        messageInput.addEventListener('blur', handleInputBlur);
     }
 
     // Polling on
@@ -73,20 +63,87 @@ function initializeMessages() {
     }
 }
 
+// NEW: adjust messages-area padding when virtual keyboard is present
+function adjustForKeyboard() {
+    const area = document.getElementById('messagesArea');
+    if (!area) return;
+
+    // Keep a safe extra so recent messages + input are visible
+    const SAFETY = 80;
+
+    if (window.visualViewport) {
+        const kbHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
+        area.style.paddingBottom = (kbHeight + SAFETY) + 'px';
+    } else {
+        // Fallback for browsers without visualViewport API
+        area.style.paddingBottom = '300px';
+    }
+}
+
+// NEW: on input focus hide header and tune padding/scroll
+function handleInputFocus() {
+    const chatArea = document.querySelector('.chat-area');
+    const area = document.getElementById('messagesArea');
+    if (!chatArea || !area) return;
+
+    // store original padding to restore on blur
+    originalMessagesAreaPaddingBottom = area.style.paddingBottom || '';
+
+    chatArea.classList.add('typing');
+
+    // adjust immediately and also when visualViewport changes
+    adjustForKeyboard();
+    if (window.visualViewport) {
+        visualViewportListener = () => {
+            adjustForKeyboard();
+            scrollToBottom(area);
+        };
+        window.visualViewport.addEventListener('resize', visualViewportListener);
+    }
+
+    // small delay to allow keyboard to appear then scroll
+    setTimeout(() => {
+        scrollToBottom(area);
+        // <<< NEW: input ကို focus လုပ်တဲ့အခါ user က message တွေကို ကြည့်နေရင် mark read ပြုလုပ်ရန် >>>
+        markMessagesAsRead();
+    }, 300);
+}
+
+// NEW: restore layout on blur
+function handleInputBlur() {
+    const chatArea = document.querySelector('.chat-area');
+    const area = document.getElementById('messagesArea');
+    if (!chatArea || !area) return;
+
+    chatArea.classList.remove('typing');
+
+    // restore padding
+    area.style.paddingBottom = originalMessagesAreaPaddingBottom || '';
+
+    if (window.visualViewport && visualViewportListener) {
+        window.visualViewport.removeEventListener('resize', visualViewportListener);
+        visualViewportListener = null;
+    }
+
+    // small delay then ensure scroll
+    setTimeout(() => scrollToBottom(area), 150);
+}
+
 // ---- Helpers ----
 function getLastMessageIdFromDOM() {
     const messagesArea = document.getElementById('messagesArea');
     if (!messagesArea) return 0;
-    const last = messagesArea.lastElementChild;
-    if (!last) return 0;
-    // id="msg-123" ထပ်ပေါ်နေစေတာကို ထိန်းချုပ်သုံးမယ်
-    const idAttr = last.getAttribute('id'); // e.g., "msg-123" or "tmp-169273..."
-    if (!idAttr) return 0;
-    if (idAttr.startsWith('msg-')) {
-        const n = parseInt(idAttr.replace('msg-', ''), 10);
-        return Number.isNaN(n) ? 0 : n;
+    // Find the highest numeric msg-<id> among children to avoid tmp nodes or non-message elements
+    let maxId = 0;
+    const children = messagesArea.children;
+    for (let i = 0; i < children.length; i++) {
+        const idAttr = children[i].id || '';
+        if (idAttr.startsWith('msg-')) {
+            const n = parseInt(idAttr.replace('msg-', ''), 10);
+            if (!Number.isNaN(n) && n > maxId) maxId = n;
+        }
     }
-    return 0;
+    return maxId;
 }
 
 function isAtBottom(el) {
@@ -183,7 +240,11 @@ async function handleMessageSubmit(e) {
         messageInput.value = '';
         // အောက်က scroll သာ current user မြောက်သွားအောင် ပေးထားတယ်
         const area = document.getElementById('messagesArea');
-        if (area) scrollToBottom(area);
+        if (area) {
+            scrollToBottom(area);
+            // <<< NEW: စာပို့ပြီးနောက်လည်း visible received မက်ဆေ့များကို mark read >>>
+            markMessagesAsRead();
+        }
     } catch (err) {
         console.error('Error sending message:', err);
         showToast('Failed to send message', 'error');
@@ -204,21 +265,29 @@ function addMessageToUI(message, opts = {}) {
     const messagesArea = document.getElementById('messagesArea');
     if (!messagesArea) return;
 
-    // Dedupe by message.id (server-side id only)
+    // If server provided numeric id and element already exists, skip (dedupe)
     if (message.id && typeof message.id === 'number') {
         const exist = document.getElementById(`msg-${message.id}`);
         if (exist) return;
     }
 
-    // Reconcile: if same content from current user & a temp node exists, upgrade it to real id
-    if (!isOptimistic && message.senderId == currentUserId) {
+    const isMine = message.senderId == currentUserId;
+
+    // Try to reconcile optimistic temp nodes when we receive the real server message
+    if (!isOptimistic && isMine) {
         const tempNodes = messagesArea.querySelectorAll('.message.sent[data-temp="1"]');
+        const incomingContent = (message.content || '').trim();
         for (const node of tempNodes) {
-            const txt = node.querySelector('.message-bubble')?.textContent?.trim() || '';
-            const want = (message.content || '').trim();
-            if (txt === want) {
+            const bubble = node.querySelector('.message-bubble');
+            const txt = bubble ? bubble.textContent.trim() : '';
+            if (txt === incomingContent) {
                 // upgrade temp -> real
-                node.id = `msg-${message.id}`;
+                if (typeof message.id === 'number') {
+                    node.id = `msg-${message.id}`;
+                } else {
+                    // ensure it has a stable id even if server didn't return numeric id
+                    node.id = `msg-srv-${Date.now()}`;
+                }
                 node.removeAttribute('data-temp');
                 // update time
                 const tEl = node.querySelector('.message-time');
@@ -226,32 +295,44 @@ function addMessageToUI(message, opts = {}) {
                     const time = new Date(message.created_at);
                     tEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                 }
-                // lastMessageId update
+                // update lastMessageId
                 if (typeof message.id === 'number') {
                     lastMessageId = Math.max(lastMessageId, message.id);
                 }
-                return; // finished
+                return; // done reconciling
             }
         }
     }
 
-    // Build DOM
+    // Build DOM node (new message)
     const wrap = document.createElement('div');
-    const isMine = message.senderId == currentUserId;
 
     // set id
     if (isOptimistic) {
         wrap.id = String(message.id); // tmp-xxx
         wrap.setAttribute('data-temp', '1');
+        // store content for later reconcile if needed
+        wrap.setAttribute('data-content', (message.content || '').trim());
     } else if (typeof message.id === 'number') {
         wrap.id = `msg-${message.id}`;
         lastMessageId = Math.max(lastMessageId, message.id);
+    } else {
+        // fallback stable id
+        wrap.id = `msg-srv-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
     }
 
     wrap.className = `message ${isMine ? 'sent' : 'received'}`;
 
-    const time = new Date(message.created_at);
+    const time = new Date(message.created_at || Date.now());
     const timeString = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    // status html for sent messages (only numeric ids can be marked/read)
+    let statusHtml = '';
+    if (isMine) {
+        const midAttr = (typeof message.id === 'number') ? message.id : (isOptimistic ? '' : '');
+        const iconHtml = (typeof message.is_read !== 'undefined' && message.is_read) ? '<i class="fas fa-check-circle read"></i>' : '<i class="fas fa-check-circle"></i>';
+        statusHtml = midAttr ? `<span class="message-status" data-message-id="${midAttr}">${iconHtml}</span>` : `<span class="message-status">${iconHtml}</span>`;
+    }
 
     wrap.innerHTML = `
         ${!isMine ? `
@@ -260,25 +341,97 @@ function addMessageToUI(message, opts = {}) {
                  class="message-avatar">` : ''}
         <div class="message-content">
             <div class="message-bubble">${escapeHtml(message.content || '')}</div>
-            <div class="message-time">${timeString}</div>
+            <div class="message-time"><span>${timeString}</span>${statusHtml}</div>
         </div>
     `;
     const wasAtBottom = isAtBottom(messagesArea);
     messagesArea.appendChild(wrap);
 
+    // if server sent is_read flag for this message, update DOM
+    if (typeof message.is_read !== 'undefined' && typeof message.id === 'number') {
+        updateMessageReadInDOM(message.id, !!message.is_read);
+    }
+
     // Smart auto-scroll:
-    //  - user က အောက်မှာနေလျှင် scroll
-    //  - current user ပို့တာလည်း scroll
     if (wasAtBottom || isMine) {
         scrollToBottom(messagesArea);
         hasUserManuallyScrolledUp = false;
     }
 }
 
+// update message status icon in DOM
+function updateMessageReadInDOM(messageId, isRead) {
+    if (!messageId) return;
+    const statusEl = document.querySelector(`.message-status[data-message-id="${messageId}"]`);
+    if (!statusEl) return;
+    const icon = statusEl.querySelector('i');
+    if (!icon) return;
+    if (isRead) {
+        icon.classList.add('read');
+    } else {
+        icon.classList.remove('read');
+    }
+}
+
+// mark visible received messages as read on server
+async function markMessagesAsRead() {
+    const area = document.getElementById('messagesArea');
+    if (!area || !chatId) return;
+
+    // collect received messages that are not yet marked read and have numeric ids
+    const toMark = [];
+    area.querySelectorAll('.message.received').forEach(msgEl => {
+        const statusEl = msgEl.querySelector('.message-status');
+        if (!statusEl) return;
+        const mid = statusEl.getAttribute('data-message-id');
+        if (!mid) return;
+        // skip temporary ids
+        if (!/^\d+$/.test(mid)) return;
+        const icon = statusEl.querySelector('i');
+        if (icon && !icon.classList.contains('read')) {
+            toMark.push(parseInt(mid, 10));
+        }
+    });
+
+    if (toMark.length === 0) return;
+
+    try {
+        const resp = await fetch('/api/messages/mark-read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: chatId, messageIds: toMark })
+        });
+        if (resp.ok) {
+            // update UI immediately
+            toMark.forEach(id => updateMessageReadInDOM(id, true));
+        } else {
+            console.warn('mark-read failed', resp.status);
+        }
+    } catch (err) {
+        console.error('markMessagesAsRead error', err);
+    }
+}
+
+// ensure scroll event triggers marking as read when user reaches bottom
+(function attachAutoMarkOnScroll() {
+    const area = document.getElementById('messagesArea');
+    if (!area) return;
+    area.addEventListener('scroll', () => {
+        if (isAtBottom(area)) {
+            // small debounce
+            clearTimeout(area._markReadTimer);
+            area._markReadTimer = setTimeout(markMessagesAsRead, 250);
+        }
+    });
+})();
+
 // ---- Polling (sinceId + dedupe) ----
 function startMessagePolling() {
     pollingErrorCount = 0;
     if (pollingInterval) clearInterval(pollingInterval);
+
+    // Ensure lastMessageId is correct at start
+    lastMessageId = Math.max(lastMessageId || 0, getLastMessageIdFromDOM() || 0);
 
     pollingInterval = setInterval(async () => {
         try {
@@ -304,11 +457,21 @@ function startMessagePolling() {
                 const area = document.getElementById('messagesArea');
                 const atBottomBefore = area ? isAtBottom(area) : true;
 
-                data.messages.forEach(msg => addMessageToUI(msg));
+                // Process messages in order and skip ones that already exist
+                for (const msg of data.messages) {
+                    if (typeof msg.id === 'number' && document.getElementById(`msg-${msg.id}`)) {
+                        continue; // already present
+                    }
+                    addMessageToUI(msg);
+                    if (typeof msg.id === 'number') {
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    }
+                }
 
-                // user မကျော်တက်စေနဲ့ — အောက်မှာရှိမှ scroll
                 if (area && (atBottomBefore || !hasUserManuallyScrolledUp)) {
                     scrollToBottom(area);
+                    // user is viewing messages -> mark received ones as read
+                    markMessagesAsRead();
                 }
             }
         } catch (e) {
@@ -319,7 +482,7 @@ function startMessagePolling() {
                 showToast('Message updates stopped due to repeated errors.', 'error');
             }
         }
-    }, 3000);
+    }, 1000);
 }
 
 // ---- Other utilities from your original file ----

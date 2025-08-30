@@ -88,14 +88,29 @@
                         </div>
                         
                         <?php foreach($userStories as $userId => $userData): ?>
+                            <?php
+                                // Get the first story's media for preview
+                                $firstStory = !empty($userData['stories']) ? $userData['stories'][0] : null;
+                                $previewSrc = $firstStory && !empty($firstStory['media']) ? $firstStory['media'] : ($userData['user']['avatar'] ?? 'images/profile.jpg');
+                            ?>
                             <div class="story"
                                  data-user-id="<?= $userId ?>"
                                  data-stories='<?= htmlspecialchars(json_encode($userData['stories']), ENT_QUOTES, 'UTF-8') ?>'
-                                 data-story-username="<?= htmlspecialchars($userData['user']['firstName']) ?>"
+                                 data-story-username="<?= ($userId === $_SESSION['user_id']) ? 'Your Story' : htmlspecialchars($userData['user']['firstName']) ?>"
                                  data-story-avatar="<?= htmlspecialchars($userData['user']['avatar'] ?? 'images/profile.jpg') ?>">
-                                <div class="story-image">
-                                    <img src="<?= htmlspecialchars($userData['user']['avatar'] ?? 'images/profile.jpg') ?>" alt="Story" onerror="this.src='images/profile.jpg'">
-                                    <span class="story-count-badge"><?= count($userData['stories']) ?></span>
+                                <div class="story-image" style="object-fit: cover; width: 100%; height: 100%; position:relative;">
+                                    <img src="<?= htmlspecialchars($previewSrc) ?>"
+                                         alt="Story"
+                                         onerror="this.src='images/profile.jpg'"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                    <!-- <span class="story-count-badge"><?= count($userData['stories']) ?></span> -->
+
+                                    <!-- small owner avatar overlay -->
+                                    <img class="story-owner-avatar"
+                                         src="<?= htmlspecialchars($userData['user']['avatar'] ?? 'images/profile.jpg') ?>"
+                                         alt="<?= htmlspecialchars($userData['user']['firstName'] ?? '') ?>"
+                                         onerror="this.src='images/profile.jpg'"
+                                         style="position:absolute; bottom:8px; left:8px; width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.9); z-index:3; object-fit:cover;">
                                 </div>
                                 <p class="story-name"><?= htmlspecialchars($userData['user']['firstName']) ?></p>
                             </div>
@@ -391,18 +406,21 @@
 function formatTimeAgo($dateString) {
     $date = new DateTime($dateString);
     $now = new DateTime();
-    $diff = $now->diff($date);
-    
-    if ($diff->days > 7) {
-        return $date->format('M j, Y');
-    } elseif ($diff->days > 0) {
-        return $diff->days . 'd ago';
-    } elseif ($diff->h > 0) {
-        return $diff->h . 'h ago';
-    } elseif ($diff->i > 0) {
-        return $diff->i . 'm ago';
-    } else {
+    // // Ensure $date is not in the future
+    // if ($date > $now) {
+    //     return 'Just now';
+    // }
+    $diff = $now->getTimestamp() - $date->getTimestamp();
+    if ($diff < 60) {
         return 'Just now';
+    } elseif ($diff < 3600) {
+        return floor($diff / 60) . 'm ago';
+    } elseif ($diff < 86400) {
+        return floor($diff / 3600) . 'h ago';
+    } elseif ($diff < 604800) {
+        return floor($diff / 86400) . 'd ago';
+    } else {
+        return $date->format('M j, Y');
     }
 }
 ?>

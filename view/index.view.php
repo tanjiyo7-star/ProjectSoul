@@ -80,14 +80,14 @@
                                 <div class="form-error" id="password-error"></div>
                             </div>
 
-                            <div class="form-options">
+                            <!-- <div class="form-options">
                                 <label class="remember-me">
                                     <input type="checkbox" name="remember_me" value="1">
                                     <span class="checkmark"></span>
                                     Remember me
                                 </label>
                                 <a href="#" class="forgot-password">Forgot password?</a>
-                            </div>
+                            </div> -->
                             
                             <button type="submit" class="btn btn-primary" name="login">
                                 <span class="btn-text">Sign In</span>

@@ -131,22 +131,40 @@
     }
 
     public function searchUsers($searchTerm, $currentUserId) {
-        $sql = "SELECT 
-                    u.id,
-                    u.firstName,
-                    u.lastName,
-                    p.avatar
-                FROM users u
-                LEFT JOIN profiles p ON u.id = p.id
-                WHERE REPLACE(CONCAT(u.firstName, u.lastName), ' ', '') LIKE :searchTerm
-                    OR u.firstName LIKE :searchTerm
-                    OR u.lastName LIKE :searchTerm
-                AND u.id != :currentUserId
-                ORDER BY u.firstName ASC";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['searchTerm' => "%$searchTerm%", 'currentUserId' => $currentUserId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $sql = "SELECT 
+                u.id,
+                u.firstName,
+                u.lastName,
+                p.avatar,
+                CASE WHEN f.status = 'accepted' THEN 1 ELSE 0 END AS isFriend,
+                CASE WHEN f.userId = :currentUserId AND f.status = 'pending' THEN 1 ELSE 0 END AS requestSent,
+                CASE WHEN f.friendId = :currentUserId AND f.status = 'pending' THEN 1 ELSE 0 END AS requestReceived
+            FROM users u
+            LEFT JOIN profiles p ON u.id = p.id
+            LEFT JOIN friends f ON (
+                (f.userId = u.id AND f.friendId = :currentUserId)
+                OR
+                (f.userId = :currentUserId AND f.friendId = u.id)
+            )
+            WHERE (
+                REPLACE(CONCAT(u.firstName, u.lastName), ' ', '') LIKE :searchTerm
+                OR u.firstName LIKE :searchTerm
+                OR u.lastName LIKE :searchTerm
+            )
+            AND u.id != :currentUserId
+            ORDER BY u.firstName ASC";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute(['searchTerm' => "%$searchTerm%", 'currentUserId' => $currentUserId]);
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($users as &$u) {
+        $u['isFriend'] = !empty($u['isFriend']);
+        $u['requestSent'] = !empty($u['requestSent']);
+        $u['requestReceived'] = !empty($u['requestReceived']);
     }
+
+    return $users;
+}
 
 
     public function getPosts($userId) {
@@ -1057,6 +1075,7 @@ public function getLastMessageForUser($current_user_id){
         $stmt->execute(['userId' => $userId]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
+    
 
 
 

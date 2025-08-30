@@ -50,7 +50,7 @@
                                         <span class="user-badge">You</span>
                                     <?php endif; ?>
                                 </h3>
-                                <p class="user-username">@<?= htmlspecialchars(strtolower(str_replace(' ', '', ($user['firstName'] ?? '') . ($user['lastName'] ?? '')))) ?></p>
+                                <!-- <p class="user-username">@<?= htmlspecialchars(strtolower(str_replace(' ', '', ($user['firstName'] ?? '') . ($user['lastName'] ?? '')))) ?></p> -->
                             </div>
                             
                             <div class="user-actions">
@@ -59,10 +59,32 @@
                                         <i class="fas fa-envelope"></i>
                                         <span>Message</span>
                                     </button>
-                                    <button class="action-btn friend-btn" onclick="sendFriendRequest(<?= $user['id'] ?>)">
-                                        <i class="fas fa-user-plus"></i>
-                                        <span>Add Friend</span>
-                                    </button>
+                                    <?php if (!empty($user['isFriend'])): ?>
+                                        <button class="action-btn friend-btn" style="background:#17bf63;" disabled>
+                                            <i class="fas fa-user-check"></i>
+                                            <span>Already Friends</span>
+                                        </button>
+                                    <?php elseif (!empty($user['requestSent'])): ?>
+                                        <button class="action-btn friend-btn" style="background:#17bf63;" disabled>
+                                            <i class="fas fa-check"></i>
+                                            <span>Request Sent</span>
+                                        </button>
+                                    <?php elseif (!empty($user['requestReceived'])): ?>
+                                        <button class="action-btn friend-btn" onclick="cancelFriendRequest(<?= $user['id'] ?>)">
+                                            <i class="fas fa-times"></i>
+                                            <span>Cancel Request</span>
+                                        </button>
+                                    <?php elseif (!empty($user['requestReceived'])): ?>
+                                        <button class="action-btn friend-btn" onclick="acceptFriendRequest(<?= $user['id'] ?>)">
+                                            <i class="fas fa-check"></i>
+                                            <span>Accept Request</span>
+                                        </button>
+                                    <?php else: ?>
+                                        <button class="action-btn friend-btn" onclick="sendFriendRequest(<?= $user['id'] ?>)">
+                                            <i class="fas fa-user-plus"></i>
+                                            <span>Add Friend</span>
+                                        </button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                                 <a href="profile?id=<?= $user['id']?>" class="action-btn view-btn">
                                     <i class="fas fa-eye"></i>

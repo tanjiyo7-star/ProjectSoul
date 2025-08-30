@@ -1,9 +1,3 @@
-/**
- * Comments JavaScript
- * Handles comment interactions, sorting, and real-time updates
- */
-
-// Global variables
 let currentSort = 'newest';
 let commentPollingInterval = null;
 
@@ -27,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Send AJAX request
             try {
-                const response = await fetch('/commentHandler', {
+                const response = await fetch('/comment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `post_id=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentText)}&csrf_token=${encodeURIComponent(csrfToken)}`
@@ -37,9 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.success) {
                     showToast('Comment successfully added!', 'success');
                     commentInput.value = '';
-                    // Option 1: Reload comments via AJAX (recommended)
                     reloadComments(postId);
-                    // Option 2: Or reload page: location.reload();
                 } else {
                     showToast(result.message || 'Failed to add comment.', 'error');
                 }

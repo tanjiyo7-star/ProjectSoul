@@ -3,43 +3,7 @@ let commentPollingInterval = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.body.addEventListener('submit', async function(e) {
-        if (e.target.classList.contains('comment-form')) {
-            e.preventDefault();
-            const form = e.target;
-            const commentInput = form.querySelector('textarea[name="comment"]');
-            const commentText = commentInput.value.trim();
-
-            if (!commentText) {
-                showToast('Please enter a comment.', 'error');
-                return;
-            }
-
-            // Prepare data
-            const postId = form.querySelector('input[name="post_id"]').value;
-            const csrfToken = form.querySelector('input[name="csrf_token"]').value;
-
-            // Send AJAX request
-            try {
-                const response = await fetch('/comment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `post_id=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentText)}&csrf_token=${encodeURIComponent(csrfToken)}`
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast('Comment successfully added!', 'success');
-                    commentInput.value = '';
-                    reloadComments(postId);
-                } else {
-                    showToast(result.message || 'Failed to add comment.', 'error');
-                }
-            } catch (err) {
-                showToast('Network error. Please try again.', 'error');
-            }
-        }
-    });
+    initializeComments();
 });
 
 /**
@@ -102,6 +66,12 @@ async function submitComment(event) {
     event.preventDefault();
     
     const form = event.target;
+    
+    // Prevent double submission
+    if (window.doubleSubmitPrevention && window.doubleSubmitPrevention.isFormSubmitting(form)) {
+        return;
+    }
+    
     const commentInput = form.querySelector('.comment-input');
     const submitBtn = form.querySelector('.submit-btn');
     const comment = commentInput.value.trim();
@@ -110,6 +80,11 @@ async function submitComment(event) {
         showToast('error', 'Please enter a comment');
         commentInput.focus();
         return;
+    }
+    
+    // Mark form as submitting
+    if (window.doubleSubmitPrevention) {
+        window.doubleSubmitPrevention.addFormSubmittingState(form);
     }
     
     // Disable submit button and show loading
@@ -143,6 +118,17 @@ async function submitComment(event) {
             body: formData
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned invalid response format');
+        }
+        
         const data = await response.json();
         
         if (data.success) {
@@ -164,6 +150,11 @@ async function submitComment(event) {
         // Remove optimistic comment on error
         removeOptimisticComments();
     } finally {
+        // Reset form state
+        if (window.doubleSubmitPrevention) {
+            window.doubleSubmitPrevention.resetFormState(form);
+        }
+        
         // Re-enable submit button
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';

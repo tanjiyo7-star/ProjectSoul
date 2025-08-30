@@ -5,6 +5,8 @@
         ]
     },
     "require": {
-        "cboden/ratchet": "^0.4.4"
+        "ratchet/pawl": "^0.4",
+        "ratchet/ratchet": "^0.4",
+        "react/socket": "^1.0"
     }
 }

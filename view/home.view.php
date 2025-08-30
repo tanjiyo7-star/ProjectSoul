@@ -11,7 +11,10 @@
     <link rel="stylesheet" href="/assets/css/stories.css" />
     <script src="/assets/js/home.js" defer></script>
     <script src="/assets/js/stories.js" defer></script>
-    <script src="/assets/js/real-time.js" defer></script>
+    <script src="/assets/js/websocket-client.js" defer></script>
+    <script src="/assets/js/time-formatter.js" defer></script>
+    <script src="/assets/js/double-submit-prevention.js" defer></script>
+    <script src="/assets/js/enhanced-mobile.js" defer></script>
 </head>
 <body>
     <?php include 'view/nav.view.php'; ?>

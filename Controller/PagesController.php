@@ -592,6 +592,8 @@ class PagesController {
     }
 
     public function commentHandler() {
+        header('Content-Type: application/json');
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
             $queryBuilder = new queryBuilder();
             $userId = $_SESSION['user_id'];
@@ -849,11 +851,50 @@ class PagesController {
     public function apiNotificationCounts() {
         header('Content-Type: application/json');
         
-        if (!isset($_SESSION['user_id'])) {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Method not allowed']);
             echo json_encode(['error' => 'Not authenticated']);
             exit();
         }
+        // Validate CSRF token
+        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
+            http_response_code(403);
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid input data']);
+            return;
+        }
         
+        try {
+            $result = $this->queryBuilder->addComment($user_id, $post_id, $comment);
+            
+            if ($result) {
+                // Get post owner for notification
+                $post = $this->queryBuilder->getPostById($post_id);
+                if ($post && $post['userId'] != $user_id) {
+                    $this->queryBuilder->addNotification(
+                        $user_id, 
+                        $post['userId'], 
+                        'commented on your post.', 
+                        $post_id
+                    );
+                }
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Comment added successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to save comment');
+            }
+        } catch (Exception $e) {
+            error_log('Comment error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false, 
+                'error' => 'Failed to add comment'
+            ]);
+        }
+    }
         $queryBuilder = new queryBuilder();
         $user_id = $_SESSION['user_id'];
         

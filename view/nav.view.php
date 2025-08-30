@@ -131,6 +131,9 @@ $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
     </div>
 </nav>
 
+<!-- Connection Status Indicator -->
+<div id="connectionStatus" class="connection-status"></div>
+
 <script>
 function toggleProfileMenu() {
     const dropdown = document.getElementById('profileDropdown');

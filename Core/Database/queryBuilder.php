@@ -502,6 +502,35 @@
         return $stmt->execute(['userId' => $userId, 'postId' => $postId]);
     }
 
+    /**
+     * Enhanced message methods for WebSocket
+     */
+    public function getLatestMessagesAfter($chatId, $afterId = 0) {
+        $sql = "SELECT m.*, u.firstName, u.lastName, p.avatar
+                FROM messages m
+                JOIN users u ON m.senderId = u.id
+                LEFT JOIN profiles p ON u.id = p.id
+                WHERE m.chatId = :chatId AND m.id > :afterId
+                ORDER BY m.created_at ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['chatId' => $chatId, 'afterId' => $afterId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function updateLastSeen($userId) {
+        $sql = "UPDATE users SET last_seen = NOW() WHERE id = :userId";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['userId' => $userId]);
+    }
+    
+    public function getOnlineUsers($sinceMinutes = 5) {
+        $sql = "SELECT id, firstName, lastName FROM users 
+                WHERE last_seen > DATE_SUB(NOW(), INTERVAL :minutes MINUTE)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['minutes' => $sinceMinutes]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
     // Story functionality
     public function addStory($userId, $media, $mediaType = 'image') {
         $sql = "INSERT INTO stories (userId, media, mediaType, created_at, expires_at) 

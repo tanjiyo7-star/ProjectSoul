@@ -9,7 +9,10 @@
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/messages.css" />
     <script src="/assets/js/messages.js" defer></script>
-    <script src="/assets/js/real-time.js" defer></script>
+    <script src="/assets/js/websocket-client.js" defer></script>
+    <script src="/assets/js/enhanced-messaging.js" defer></script>
+    <script src="/assets/js/time-formatter.js" defer></script>
+    <script src="/assets/js/double-submit-prevention.js" defer></script>
 </head>
 <body>
     <?php

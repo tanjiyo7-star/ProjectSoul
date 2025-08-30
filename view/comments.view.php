@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/navigation.css" />
     <link rel="stylesheet" href="/assets/css/comments.css" />
+    <script src="/assets/js/websocket-client.js" defer></script>
+    <script src="/assets/js/time-formatter.js" defer></script>
+    <script src="/assets/js/double-submit-prevention.js" defer></script>
     <script src="/assets/js/comments.js" defer></script>
 </head>
 <body>
